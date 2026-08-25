@@ -1,0 +1,19 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Signing & developer identity — NEVER commit
+*.mobileprovision
+*.p12
+*.cer
+*.provisionprofile
+**/ExportOptions.plist
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
