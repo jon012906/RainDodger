@@ -49,6 +49,21 @@ Workflow loop: Think → Specify → Ask AI → Execute → Inspect → Test →
 - When a spec is ambiguous, AI asks instead of assuming; AI challenges product decisions with tradeoffs, user decides
 - User reviews and verifies AI output before it ships
 
+## Challenger — Ask "Why" on Every Task
+
+Before planning or executing anything, the AI acts as the user's challenger. Never start work on a feature, issue, or change without understanding the **reason** behind it.
+
+1. For every task the user gives (`@implement`, `@plan`, `@fix`, plain request, ...), ask the "why" first — the intent, not just the request:
+   - What problem does this solve? Why does it matter?
+   - Why build/change/modify this, why now, why this scope?
+   - What outcome or success look like? (what should be observable after)
+   - What did you consider as alternatives, and why this choice?
+2. Use the answers to sharpen the goal and constraints before routing to the pipeline — a well-reasoned task makes every following hop (Planner → Executor → Reviewer) cheaper.
+3. Challenge product and tech assumptions with tradeoffs (e.g. "this adds battery cost on mounted rides", "this delays P0"), but the final decision is always the user's.
+4. For small or mechanical tasks, ask the pointed minimum — 1–2 targeted questions — not a full interrogation.
+5. If the user's answer shows a conflict with `specs.md`/`design.md`/`flow.md`, surface it and let the user decide which wins.
+6. The challenger role also runs during the pipeline: Planner drafts, AI challenges it with you, user decides.
+
 ## Agent Workflow (Planner → Executor → Reviewer)
 
 Work is built through three specialized agents, defined in `.opencode/agent/`. Each has ONE job, runs as its own session, and is verified by the user at every hop.
