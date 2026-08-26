@@ -49,6 +49,36 @@ Workflow loop: Think → Specify → Ask AI → Execute → Inspect → Test →
 - When a spec is ambiguous, AI asks instead of assuming; AI challenges product decisions with tradeoffs, user decides
 - User reviews and verifies AI output before it ships
 
+## Agent Workflow (Planner → Executor → Reviewer)
+
+Work is built through three specialized agents, defined in `.opencode/agent/`. Each has ONE job, runs as its own session, and is verified by the user at every hop.
+
+| Agent | Job | Interaction |
+|---|---|---|
+| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `specs.md`, `design.md`, `flow.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
+| Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan. Reviews: own build errors only |
+| Reviewer | Verify Executor output against plan + criteria in an isolated session | Verdict: PASS/FAIL + issue lines. Never edits code |
+
+```
+User intent ──► Planner ──plan + criteria──► User verify
+                                                 │
+                                                 ▼
+                              Reviewer ──diff/checks──► Executor ──code + build──► User verify
+                                  ▲                       ▲
+                                  └── issues (FAIL) ──────┘
+                                         │
+                                         ▼
+                                  Planner replans fix ────► Executor ... (loop until PASS)
+```
+
+Rules:
+- **Roles never merge:** Executor never reviews its own work; Reviewer never fixes issues; Planner never writes code.
+- **Separate sessions on purpose:** Executor and Reviewer must never be the same agent — independence (no self-approval/hallucination) is the point.
+- **User gates every hop:** the user verifies the plan, the execution result, and the verdict before the pipeline continues; final decision is the user's.
+- If the Reviewer fails a phase, the fix loop is: Reviewer issues → Planner fix plan → Executor implements → Reviewer re-verifies → repeat until PASS.
+- The user contributes more strongly on the plan activity: Planner drafts and challenges, user decides.
+- Never commit or push automatically — user does it explicitly with `@push`.
+
 ## Key Rules
 
 - Do NOT add comments unless asked; write self-documenting, readable code
