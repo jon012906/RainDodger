@@ -27,6 +27,28 @@ I am an iOS developer working on **Rain Dodger** — a native iOS app for motorc
 - All map/weather features require Info.plist usage descriptions: `NSLocationWhenInUseUsageDescription`, and WeatherKit entitlements
 - Keep the motorcyclist use case front and center: one-hand glanceable UI, gloves-friendly big hit targets, high contrast, works with gloves while riding (support iPhone while mounted)
 
+## Working Agreement
+
+| Responsibility     | User                            | AI                     |
+| ------------------ | ------------------------------- | ---------------------- |
+| Define the problem | **Lead**                        | Assist                 |
+| Product direction  | **Lead**                        | Challenge              |
+| User flow          | **Lead**                        | Review                 |
+| Architecture       | **Understand & decide**         | Propose/review         |
+| Technical research | Participate                     | **Lead/assist**        |
+| Coding             | Review/understand               | **Execute**            |
+| Boilerplate        | —                               | **Execute**            |
+| Testing            | **Verify**                      | Generate/assist        |
+| Debugging          | **Reason first**                | Assist                 |
+| Final decision     | **User**                        | —                      |
+
+Workflow loop: Think → Specify → Ask AI → Execute → Inspect → Test → Explain → Debug → Reflect
+
+- User keeps ownership of technical reasoning: direction, design, and verification stay with the user
+- AI automates implementation-heavy work (git, code, boilerplate) and explains what/why in reviewable increments
+- When a spec is ambiguous, AI asks instead of assuming; AI challenges product decisions with tradeoffs, user decides
+- User reviews and verifies AI output before it ships
+
 ## Key Rules
 
 - Do NOT add comments unless asked; write self-documenting, readable code
