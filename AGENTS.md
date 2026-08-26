@@ -34,5 +34,5 @@ I am an iOS developer working on **Rain Dodger** — a native iOS app for motorc
 - Prefer Apple frameworks (MapKit, WeatherKit, CoreLocation) over third-party SDKs
 - Never commit or push credentials or sensitive assets: API keys, secret keys, tokens, certificates, signing profiles, permission/entitlement files, datasets, ML model pipelines (training data, weights, `.mlmodel` sources), or `.gitignore`-matched identity files — WeatherKit uses entitlements, not keys
 - Never commit or push automatically — only commit and push when the user explicitly runs the command `@push`
-- Never commit developer identity: signing profiles, certificates, `*.mobileprovision`, `DEVELOPMENT_TEAM` (personal Apple ID / team ID), or Xcode user data (`xcuserdata/`) — `.gitignore` already excludes them
+- Never commit developer identity: signing profiles, certificates, `*.mobileprovision`, `DEVELOPMENT_TEAM` (personal Apple ID / team ID), bundle identifiers (personal `com.<name>.*` IDs), or Xcode user data (`xcuserdata/`) — `.gitignore` already excludes them
 - When asked to verify, run `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'` (adjust simulator name as available)
