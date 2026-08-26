@@ -7,7 +7,7 @@ I am an iOS developer working on **Rain Dodger** — a native iOS app for motorc
 ## Project Overview
 
 - **App:** Rain Dodger (iPhone-first, SwiftUI)
-- **Deployment target:** iOS 26.5 (modern SwiftUI / SwiftData stack, no legacy UIKit)
+- **Deployment target:** iPhone 13 and newer (iOS 26.x); target the latest tech available on iPhone 17 (modern SwiftUI / SwiftData stack, no legacy UIKit)
 - **Core idea:** Take a rider's destination, overlay current + forecast rain on Apple Maps routes, and suggest the driest departure time and route.
 
 ## Tech Stack
@@ -32,7 +32,7 @@ I am an iOS developer working on **Rain Dodger** — a native iOS app for motorc
 - Do NOT add comments unless asked; write self-documenting, readable code
 - Build and verify with the Xcode project (`RainDodger.xcodeproj`) — target `RainDodger`
 - Prefer Apple frameworks (MapKit, WeatherKit, CoreLocation) over third-party SDKs
-- Never commit API keys or secrets; WeatherKit uses entitlements, not keys
+- Never commit or push credentials or sensitive assets: API keys, secret keys, tokens, certificates, signing profiles, permission/entitlement files, datasets, ML model pipelines (training data, weights, `.mlmodel` sources), or `.gitignore`-matched identity files — WeatherKit uses entitlements, not keys
 - Never commit or push automatically — only commit and push when the user explicitly runs the command `@push`
 - Never commit developer identity: signing profiles, certificates, `*.mobileprovision`, `DEVELOPMENT_TEAM` (personal Apple ID / team ID), or Xcode user data (`xcuserdata/`) — `.gitignore` already excludes them
 - When asked to verify, run `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'` (adjust simulator name as available)
