@@ -1,15 +1,28 @@
-# Xcode
+# Xcode user data — NEVER commit (contains developer identity)
 xcuserdata/
 *.xcuserstate
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+
+# Xcode build output
 DerivedData/
 build/
+*.ipa
+*.dSYM.zip
+*.dSYM
 
 # Signing & developer identity — NEVER commit
 *.mobileprovision
+*.provisionprofile
 *.p12
 *.cer
-*.provisionprofile
+*.key
 **/ExportOptions.plist
+**/xcodebuild.log
 
 # macOS
 .DS_Store

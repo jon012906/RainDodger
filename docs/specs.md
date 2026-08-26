@@ -47,7 +47,7 @@ Rain Dodger keeps all of that — same mental model — and adds a decision laye
 |---|---|---|
 | UI | SwiftUI | All screens; modern `@Observable` state |
 | Maps | MapKit | Map display, `MKRoute`/`MKDirections` routing, route alternatives |
-| Weather | WeatherKit | Current conditions, precipitation, hourly/daily forecast, precipitation chance |
+| Weather | WeatherKit | Real-time current conditions + **minute-by-minute precipitation forecast (next 60 min)**, queried per coordinate along the route path (start → arrival); hourly/daily forecast, precipitation chance |
 | Location | CoreLocation | Rider position, authorization (`NSLocationWhenInUseUsageDescription`) |
 | ML | **Core ML** | On-device rain prediction: short-term precipitation forecasting along route segments |
 | Persistence | SwiftData | Trips, saved destinations, route plans |
@@ -59,7 +59,15 @@ Rain Dodger keeps all of that — same mental model — and adds a decision laye
 - Inputs: coordinates, time-of-day, historical precip, temperature, humidity, pressure trends
 - Output: precipitation chance 0–1 for the segment at the estimated arrival time
 - Model is bundled in the app (`.mlmodel`), runs fully on-device — no API keys
-- Used as a **confidence layer on top of WeatherKit**: WeatherKit gives hourly forecast for waypoints; Core ML fills gaps between waypoints and blends both into a per-segment rain probability
+- Used as a **confidence layer on top of WeatherKit**: WeatherKit gives real-time conditions + minutely forecast for sampled coordinates along the route; Core ML fills gaps between waypoints and blends both into a per-segment rain probability
+
+### Weather Data Model
+
+- Weather is always keyed by **coordinate on the path**, never by destination only: sample the route polyline every ~1 km from start to arrival, and request weather at each sample point
+- **Real-time:** current conditions (temp, precipitation intensity) at each sampled coordinate at request time
+- **Minute forecast:** WeatherKit `MinuteForecast` (per-minute precipitation, next 60 min) at each sampled coordinate → lets the app answer "is it raining here *when I pass through*" for rides starting within the hour
+- **Hourly/daily:** longer-horizon forecasts at the same coordinates for departure-time optimization and rides beyond 60 min
+- Sample points are cached per route; re-fetched when the route or departure time changes
 
 ### Data Flow
 
@@ -70,9 +78,12 @@ Destination ──► MKDirections ──► 2-3 route alternatives
          For each route: sample waypoints every ~1 km
                         │
                         ▼
-      WeatherKit hourly precip ─┐
-      Core ML short-term model ─┼──► per-segment rain chance + ETA at segment
-      route distance/time ─────┘
+      WeatherKit (per coordinate) ─┐
+       real-time current ──────────┤──► per-segment rain chance
+       minute forecast (60 min) ───┤    + ETA at segment
+       hourly/daily forecast ──────┤
+      Core ML short-term model ────┘
+      route distance/time ─────────┘
                         │
                         ▼
    Route cards: Driest / Fastest + rain overlay + departure time
