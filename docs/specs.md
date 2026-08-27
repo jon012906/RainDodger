@@ -117,3 +117,23 @@ Tunable weights (`w1`, `w2`) live in config so product can tune "how much rain-a
 - On-device privacy: location + route stay local; no analytics of riding behavior unless user opts in
 - No API keys in repo; WeatherKit via entitlements, Core ML bundled
 - Weather-dependent feature must degrade gracefully offline (show route without rain overlay, note "live rain unavailable")
+
+## 8. Workspace Location (branch identity)
+
+This section identifies the file locations of the CURRENT branch and is rewritten on every branch switch — it is the branch's identity of where its work lives. Update it as part of the first commit of a new branch. **All paths are relative to the repository root** (never absolute machine paths, to avoid exposing local machine identity).
+
+| Field | Current branch value |
+|---|---|
+| Branch | `main` |
+| Feature folders (files this branch owns/adds) | `docs/` (specs, design, flow, guide) · `.opencode/command/` · `.opencode/agent/` |
+| Models | `_REPLACE_` (none yet — template `Item` model in `RainDodgerApp.swift`) |
+| Services | `_REPLACE_` |
+| ViewModels | `_REPLACE_` |
+| Views | `_REPLACE_` |
+| Entry point files | `RainDodger/RainDodgerApp.swift` |
+| Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
+
+How to keep it accurate:
+- On branch create: fill the table with the files that branch creates/modifies (Models/ Views/ Services/ ViewModels/ under `RainDodger/`, plus docs and config). `_REPLACE_` marks values to fill.
+- On branch switch: wait for the checkout, then update the table to the new branch's values and commit it with the branch's first work.
+- The AI reads this section to know exactly where the branch's files live before planning (Planner) and executing (Executor).
