@@ -94,6 +94,32 @@ Rules:
 - The user contributes more strongly on the plan activity: Planner drafts and challenges, user decides.
 - Never commit or push automatically — user does it explicitly with `@push`.
 
+## Review Handoff — User + Reviewer Confirm Before Continuing
+
+Every time a phase (or fix) finishes executing, the AI must stop and ask the user for confirmation before anything continues (next phase, push). The result is checked by **two reviewers: the user and the Reviewer agent**, and both must pass.
+
+1. **User check (checklist):** the AI stops with a short report + an openable review checklist:
+
+```
+Phase <N> done
+
+List to review (click to open):
+- [ ] <what to check> | <path/file>[:line]
+- [ ] <what to check> | <path/file>[:line]
+
+Review and confirm, or say what to change.
+```
+
+2. **Reviewer check (verdict):** after the user's confirmation, the Reviewer agent verifies the same phase in a separate session and returns VERDICT: PASS/FAIL + issue lines.
+
+3. Only when **both** pass (user confirms checklist + Reviewer returns PASS) does the phase move on. If either fails, the user decides: fix now (Planner fix plan → Executor → re-check) or adjust the plan first.
+
+- Every created/modified file is listed with the specific thing to verify (function, feature, view, logic), so the user knows why it matters — not just "file changed".
+- Paths are formatted as clickable references (`path/file.swift:line`), so the user can open them quickly.
+- The checkboxes cover the acceptance criteria of that phase — the user's tick marks are the approval gate.
+- The AI does NOT auto-continue to `@review` / next phase / `@push` until the user confirms (or explicitly says to proceed).
+- If a fix loop is running (Reviewer issues → Executor), the same checklist applies to the fixed phase before re-verification continues.
+
 ## Key Rules
 
 - Do NOT add comments unless asked; write self-documenting, readable code
