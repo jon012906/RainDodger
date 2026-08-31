@@ -30,3 +30,6 @@ build/
 # Swift Package Manager
 .build/
 .swiftpm/
+
+# Generated diagram renders (scripts/render-diagrams.sh)
+docs/diagrams/out/
