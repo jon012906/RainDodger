@@ -1,19 +1,19 @@
-# Development Flow — Rain Dodger
+# Implementation Log — Rain Dodger
 
-Living document that tracks the app from Xcode template to a working app. Phases are executed in order; a phase is **done** only when everything in its checklist is complete, the project builds (`xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger`), and `@review` reports clean.
+Living document that tracks the app from Xcode template to a working app, and records the **user's changes in each phase**. Each phase is executed with `@implement <Phase>` and verified with `@review`; every change made in a phase is documented here (see **Change Log**). A phase is **done** only when everything in its checklist is complete, the project builds (`xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger`), and `@review` reports clean.
 
 ## How to work this file
 
 - Each phase is executed with `@implement <Phase>` (or ran as its own plan), then checked with `@review`.
 - Tick checkboxes as work completes; move a phase to `Done` only when verified.
-- Feature work always follows `docs/MVVM-Architecture-Template.md`; visual work follows `docs/design.md`; scope follows `docs/specs.md`.
+- Feature work always follows `.opencode/rules/003-project-guideline.md`; visual work follows `docs/design.md`; scope follows `docs/specs.md`.
 - Never commit or push here — the user does it explicitly with `@push`.
 
 ## Phase 0 — Baseline (current state)
 
 - [x] Xcode project `RainDodger.xcodeproj` builds on iPhone 16 simulator
 - [x] SwiftData `ModelContainer` wired in `RainDodgerApp.swift`
-- [x] Docs in place: `specs.md`, `design.md`, `MVVM-Architecture-Template.md`
+- [x] Docs in place: `specs.md`, `design.md`, `.opencode/rules/003-project-guideline.md`
 - [ ] Template `Item` model replaced by domain models (see Phase 2)
 
 ## Phase 1 — Foundation
@@ -83,6 +83,8 @@ Goal: rider-ready app, not a demo.
 
 ## Change Log
 
-| Date | Change |
-|---|---|
-| | |
+Document every change made in each phase here — files added/modified, decisions, and anything that deviated from the plan.
+
+| Date | Phase | Change |
+|---|---|---|
+| | | |

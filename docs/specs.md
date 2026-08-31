@@ -115,7 +115,7 @@ Tunable weights (`w1`, `w2`) live in config so product can tune "how much rain-a
 
 **Accessibility is not optional.** All new UI code must be accessible
 from the start (WCAG 2.1 AA, MAS-C). Treat a11y bugs as P0 issues.
-See [`docs/accessibility.md`](docs/accessibility.md) for VoiceOver,
+See [`.opencode/rules/004-accessibility.md`](../.opencode/rules/004-accessibility.md) for VoiceOver,
 keyboard, Dynamic Type, color contrast, touch target, and testing
 requirements.
 
@@ -133,7 +133,7 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 | Field | Current branch value |
 |---|---|
 | Branch | `main` |
-| Feature folders (files this branch owns/adds) | `docs/` (specs, design, flow, guide) · `.opencode/command/` · `.opencode/agent/` |
+| Feature folders (files this branch owns/adds) | `docs/` (specs, design, implementation) · `.opencode/command/` · `.opencode/agent/` |
 | Models | `_REPLACE_` (none yet — template `Item` model in `RainDodgerApp.swift`) |
 | Services | `_REPLACE_` |
 | ViewModels | `_REPLACE_` |
