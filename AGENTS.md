@@ -1,57 +1,10 @@
 # AGENTS.md
 
-## Profile
-
 I am an iOS developer working on **Rain Dodger** — a native iOS app for motorcyclists that combines Apple Maps routing with live weather data so riders can plan routes that avoid rain and stay dry.
-
-## Project Overview
-
-- **App:** Rain Dodger (iPhone-first, SwiftUI)
-- **Deployment target:** iPhone 13 and newer (iOS 26.x); target the latest tech available on iPhone 17 (modern SwiftUI / SwiftData stack, no legacy UIKit)
-- **Core idea:** Take a rider's destination, overlay current + forecast rain on Apple Maps routes, and suggest the driest departure time and route.
-
-## Tech Stack
-
-- **Language:** Swift 5.0, modern SwiftUI (`@Observable`, `@Environment`, `NavigationSplitView`/`NavigationStack`)
-- **Persistence:** SwiftData (a `ModelContainer` is already wired up in `RainDodgerApp.swift`; template `Item` model still present — will be replaced by domain models like `Trip`, `RoutePlan`, `SavedDestination`)
-- **Maps:** Apple Maps — `MapKit` (`MKMapView` via `Map`, `MKRoute`/`MKDirections` for routing)
-- **Weather:** `WeatherKit` (`WeatherService`) for current conditions, precipitation, and hourly forecast
-- **ML:** `Core ML` for on-device short-term rain prediction (blended with WeatherKit into per-route-segment rain chance)
-- **Location:** `CoreLocation` for the rider's current position
-
-## Architecture & Conventions
-
-- Single-view SwiftUI app today (`RainDodger/`); grows into feature folders: `Models/`, `Services/`, `Views/`, `ViewModels/`
-- Services (WeatherKit, Directions, Location) behind protocols so they can be mocked in previews and tests
-- Async/await for all service calls; `@MainActor` on ViewModels and observable models
-- All map/weather features require Info.plist usage descriptions: `NSLocationWhenInUseUsageDescription`, and WeatherKit entitlements
-- Keep the motorcyclist use case front and center: one-hand glanceable UI, gloves-friendly big hit targets, high contrast, works with gloves while riding (support iPhone while mounted)
-
-## Working Agreement
-
-| Responsibility     | User                            | AI                     |
-| ------------------ | ------------------------------- | ---------------------- |
-| Define the problem | **Lead**                        | Assist                 |
-| Product direction  | **Lead**                        | Challenge              |
-| User flow          | **Lead**                        | Review                 |
-| Architecture       | **Understand & decide**         | Propose/review         |
-| Technical research | Participate                     | **Lead/assist**        |
-| Coding             | Review/understand               | **Execute**            |
-| Boilerplate        | —                               | **Execute**            |
-| Testing            | **Verify**                      | Generate/assist        |
-| Debugging          | **Reason first**                | Assist                 |
-| Final decision     | **User**                        | —                      |
-
-Workflow loop: Think → Specify → Ask AI → Execute → Inspect → Test → Explain → Debug → Reflect
-
-- User keeps ownership of technical reasoning: direction, design, and verification stay with the user
-- AI automates implementation-heavy work (git, code, boilerplate) and explains what/why in reviewable increments
-- When a spec is ambiguous, AI asks instead of assuming; AI challenges product decisions with tradeoffs, user decides
-- User reviews and verifies AI output before it ships
 
 ## Challenger — Ask "Why" on Every Task
 
-Before planning or executing anything, the AI acts as the user's challenger. Never start work on a feature, issue, or change without understanding the **reason** behind it.
+Before planning or executing anything, act as the user's challenger. Never start work on a feature, issue, or change without understanding the **reason** behind it.
 
 1. For every task the user gives (`@implement`, `@plan`, `@fix`, plain request, ...), ask the "why" first — the intent, not just the request:
    - What problem does this solve? Why does it matter?
@@ -61,83 +14,22 @@ Before planning or executing anything, the AI acts as the user's challenger. Nev
 2. Use the answers to sharpen the goal and constraints before routing to the pipeline — a well-reasoned task makes every following hop (Planner → Executor → Reviewer) cheaper.
 3. Challenge product and tech assumptions with tradeoffs (e.g. "this adds battery cost on mounted rides", "this delays P0"), but the final decision is always the user's.
 4. For small or mechanical tasks, ask the pointed minimum — 1–2 targeted questions — not a full interrogation.
-5. If the user's answer shows a conflict with `specs.md`/`design.md`/`flow.md`, surface it and let the user decide which wins.
+5. If the user's answer shows a conflict with `specs.md`/`design.md`/`implementation.md`, surface it and let the user decide which wins.
 6. The challenger role also runs during the pipeline: Planner drafts, AI challenges it with you, user decides.
 
-## Agent Workflow (Planner → Executor → Reviewer)
+## Rules — Lazy-Loaded, Read Only What the Task Needs
 
-Work is built through three specialized agents, defined in `.opencode/agent/`. Each has ONE job, runs as its own session, and is verified by the user at every hop.
+CRITICAL: When you encounter a file reference (e.g. `.opencode/rules/003-project-guideline.md`), use your Read tool to load it on a need-to-know basis. They're relevant to the SPECIFIC task at hand.
 
-| Agent | Job | Interaction |
-|---|---|---|
-| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `specs.md`, `design.md`, `flow.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
-| Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan. Reviews: own build errors only |
-| Reviewer | Verify Executor output against plan + criteria in an isolated session | Verdict: PASS/FAIL + issue lines. Never edits code |
+- Do NOT preemptively load all references — use lazy loading based on actual need
+- When loaded, treat content as mandatory instructions that override defaults
+- Follow references recursively when needed
 
-```
-User intent ──► Planner ──plan + criteria──► User verify
-                                                 │
-                                                 ▼
-                              Reviewer ──diff/checks──► Executor ──code + build──► User verify
-                                  ▲                       ▲
-                                  └── issues (FAIL) ──────┘
-                                         │
-                                         ▼
-                                  Planner replans fix ────► Executor ... (loop until PASS)
-```
-
-Rules:
-- **Roles never merge:** Executor never reviews its own work; Reviewer never fixes issues; Planner never writes code.
-- **Separate sessions on purpose:** Executor and Reviewer must never be the same agent — independence (no self-approval/hallucination) is the point.
-- **User gates every hop:** the user verifies the plan, the execution result, and the verdict before the pipeline continues; final decision is the user's.
-- If the Reviewer fails a phase, the fix loop is: Reviewer issues → Planner fix plan → Executor implements → Reviewer re-verifies → repeat until PASS.
-- The user contributes more strongly on the plan activity: Planner drafts and challenges, user decides.
-- Never commit or push automatically — user does it explicitly with `@push`.
-
-## Review Handoff — User + Reviewer Confirm Before Continuing
-
-Every time a phase (or fix) finishes executing, the AI must stop and ask the user for confirmation before anything continues (next phase, push). The result is checked by **two reviewers: the user and the Reviewer agent**, and both must pass.
-
-1. **User check (checklist):** the AI stops with a short report + an openable review checklist:
-
-```
-Phase <N> done
-
-List to review (click to open):
-- [ ] <what to check> | <path/file>[:line]
-- [ ] <what to check> | <path/file>[:line]
-
-Review and confirm, or say what to change.
-```
-
-2. **Reviewer check (verdict):** after the user's confirmation, the Reviewer agent verifies the same phase in a separate session and returns VERDICT: PASS/FAIL + issue lines.
-
-3. Only when **both** pass (user confirms checklist + Reviewer returns PASS) does the phase move on. If either fails, the user decides: fix now (Planner fix plan → Executor → re-check) or adjust the plan first.
-
-- Every created/modified file is listed with the specific thing to verify (function, feature, view, logic), so the user knows why it matters — not just "file changed".
-- Paths are formatted as clickable references (`path/file.swift:line`), so the user can open them quickly.
-- The checkboxes cover the acceptance criteria of that phase — the user's tick marks are the approval gate.
-- The AI does NOT auto-continue to `@review` / next phase / `@push` until the user confirms (or explicitly says to proceed).
-- If a fix loop is running (Reviewer issues → Executor), the same checklist applies to the fixed phase before re-verification continues.
-
-## Branch Goals — the Mission of the Current Branch
-
-Every feature branch (`docs/`, `feat/`, `fix/`) carries a goal file defining its mission, stored at `.opencode/branch-goals/<branch-name>.md` (gitignored, workspace metadata only).
-
-- The user creates branches with `/branch <name> "<goal>"` — the goal is stored at branch creation time and each branch has its own goal
-- **Before any work on a session, read the current branch's goal:**
-  1. Determine the current branch: `git branch --show-current`
-  2. Read `.opencode/branch-goals/<branch>.md` if it exists
-  3. If no goal file exists, ask the user what the goal is — do not assume
-- The branch goal is the ground truth for every Planner plan, Executor implementation, and Reviewer verdict: work that does not serve the branch goal should be challenged
-- If the user's request conflicts with the branch goal, surface the conflict and let the user decide
-
-## Key Rules
-
-- Do NOT add comments unless asked; write self-documenting, readable code
-- Build and verify with the Xcode project (`RainDodger.xcodeproj`) — target `RainDodger`
-- Prefer Apple frameworks (MapKit, WeatherKit, CoreLocation) over third-party SDKs
-- Never commit or push credentials or sensitive assets: API keys, secret keys, tokens, certificates, signing profiles, permission/entitlement files, datasets, ML model pipelines (training data, weights, `.mlmodel` sources), or `.gitignore`-matched identity files — WeatherKit uses entitlements, not keys
-- Never commit or push automatically — only commit and push when the user explicitly runs the command `@push`
-- Never commit developer identity: signing profiles, certificates, `*.mobileprovision`, `DEVELOPMENT_TEAM` (personal Apple ID / team ID), bundle identifiers (personal `com.<name>.*` IDs), or Xcode user data (`xcuserdata/`) — `.gitignore` already excludes them
-- When asked to verify, run `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'` (adjust simulator name as available)
+| When | Load |
+|---|---|
+| Session start, before any work | `.opencode/rules/001-branch-goals.md`, `.opencode/rules/003-project-guideline.md`, `.opencode/rules/002-workflow.md` |
+| Planning / implementing / reviewing (pipeline) | `.opencode/rules/002-workflow.md` |
+| App code: models, services, views, viewmodels, SwiftData, maps/weather | `.opencode/rules/003-project-guideline.md`, `.opencode/rules/004-accessibility.md` |
+| Build, verify, code style, frameworks | `.opencode/rules/003-project-guideline.md` (Code Structure section), `.opencode/rules/004-accessibility.md` |
+| Git commit/push, secrets, identity | `.opencode/rules/005-commit-push-guidelines.md` |
+| Feature work (what/how it must be) | `docs/specs.md`, `docs/design.md`, `docs/implementation.md` |

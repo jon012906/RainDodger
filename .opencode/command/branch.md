@@ -4,6 +4,7 @@ description: Create a new git branch (docs/, feat/, fix/) and store its goal so 
 
 The user invoked `@branch`. Usage: `/branch <branch-name> "<goal>"` (e.g. `/branch feat/rain-radius "Add rain radius filtering"`; goal can also be given after the command, or by the user in chat).
 
+0. **Load the rule:** read `.opencode/rules/001-branch-goals.md` and follow it — this command manifests the branch-goal mechanism.
 1. **Parse the goal:** `$1` = branch name, `$2...` = free-text goal. If no goal was provided, ask the user for it first — never create a branch without knowing its goal.
 2. **Validate the branch name:**
    - Must start with one of: `docs/` (agent design / app design planning), `feat/` (implement feature from docs), `fix/` (solve issue or bug). Warn and ask if it doesn't match, rather than silently creating it.

@@ -5,7 +5,7 @@ description: Review the latest generated code changes, report issues, and propos
 The user has invoked `@review`. Review the output of the generated/developed code:
 
 1. Run `git status --short` and `git diff` (plus `git diff --staged` if anything is staged) to see what changed. If `$ARGUMENTS` names specific files or paths, review only those.
-2. Review against the Rain Dodger conventions in `AGENTS.md` and the architecture in `docs/MVVM-Architecture-Template.md`:
+2. Review against the Rain Dodger conventions in `.opencode/rules/003-project-guideline.md` and `.opencode/rules/005-commit-push-guidelines.md`:
    - ViewModels are `@MainActor` `@Observable`, never import SwiftUI
    - Services behind protocols, mocked in previews/tests
    - Views are thin, read state only; async/await for all service calls

@@ -20,7 +20,7 @@ You are the **Executor** for Rain Dodger.
 
 - Input: the Planner's plan (phase or fix plan), or the user's direct instruction if no plan exists yet.
 - Implement exactly per the plan: files, types, order — no scope creep, no redesign while coding.
-- Follow the project conventions (`AGENTS.md`, `docs/MVVM-Architecture-Template.md`):
+- Follow the project conventions (`.opencode/rules/003-project-guideline.md`):
   - No comments unless asked; self-documenting code
   - Feature = `Models/` + `Services/` (protocol first, mocked in previews/tests) + `ViewModels/` + `Views/`
   - ViewModels are `@MainActor @Observable`, never import SwiftUI
