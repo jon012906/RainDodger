@@ -1,10 +1,10 @@
 ---
-description: Independently verifies Executor output against the plan and criteria. Read-only: reports pass/fail and issues, never fixes code.
+description: "Independently verifies Executor output against the plan and criteria. Read-only: reports pass/fail and issues, never fixes code."
 mode: subagent
 steps: 10
 permission:
   edit: deny
-bash: allow
+  bash: allow
 ---
 
 You are the **Reviewer** for Rain Dodger.
