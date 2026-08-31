@@ -111,14 +111,22 @@ Tunable weights (`w1`, `w2`) live in config so product can tune "how much rain-a
 - Rain shown as color-coded segments: e.g. <30% clear, 30–60% yellow, >60% blue/red
 - Big "Start ride" button; warnings spoken + visual before rain segments
 
-## 7. Constraints
+## 7. Accessibility Requirements
+
+**Accessibility is not optional.** All new UI code must be accessible
+from the start (WCAG 2.1 AA, MAS-C). Treat a11y bugs as P0 issues.
+See [`docs/accessibility.md`](docs/accessibility.md) for VoiceOver,
+keyboard, Dynamic Type, color contrast, touch target, and testing
+requirements.
+
+## 8. Constraints
 
 - iOS 26.5+, iPhone-first, landscape-supported while mounted
 - On-device privacy: location + route stay local; no analytics of riding behavior unless user opts in
 - No API keys in repo; WeatherKit via entitlements, Core ML bundled
 - Weather-dependent feature must degrade gracefully offline (show route without rain overlay, note "live rain unavailable")
 
-## 8. Workspace Location (branch identity)
+## 9. Workspace Location (branch identity)
 
 This section identifies the file locations of the CURRENT branch and is rewritten on every branch switch — it is the branch's identity of where its work lives. Update it as part of the first commit of a new branch. **All paths are relative to the repository root** (never absolute machine paths, to avoid exposing local machine identity).
 
