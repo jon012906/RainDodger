@@ -15,7 +15,7 @@ You are the **Reviewer** for Rain Dodger.
 - Keep context small: `git diff --stat` + `git status` first; then diff only the changed files (`git diff -- <file>`), and read those files with line ranges, never whole files.
 - Verify, read-only:
   1. **Acceptance criteria** of the plan — check each one against the diff
-  2. **Conventions:** `AGENTS.md` + `docs/MVVM-Architecture-Template.md` — no comments, MVVM layering, services behind protocols, `@MainActor @Observable` ViewModels that never import SwiftUI, SwiftData models registered in `RainDodgerApp.swift`
+  2. **Conventions:** `.opencode/rules/003-project-guideline.md` — no comments, MVVM layering, services behind protocols, `@MainActor @Observable` ViewModels that never import SwiftUI, SwiftData models registered in `RainDodgerApp.swift`
   3. **Build:** `xcodebuild -quiet build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16' > build.log 2>&1` (adjust simulator name as available); on failure show only `tail -30 build.log`
   4. **Glove-first UI:** ≥ 44 pt targets, high contrast, glanceable per `docs/design.md`
   5. **Security/identity:** no API keys, no `DEVELOPMENT_TEAM`, no `xcuserdata/` staged, nothing `.gitignore`-matched

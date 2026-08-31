@@ -43,7 +43,7 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 
 ## `@implement`
 
-**What it does:** Executes the plan or phase in progress (from `$ARGUMENTS` or the session's to-do list) following `docs/MVVM-Architecture-Template.md` and `AGENTS.md`. Builds after each phase with `xcodebuild` and runs the review flow at the end.
+**What it does:** Executes the plan or phase in progress (from `$ARGUMENTS` or the session's to-do list) following `.opencode/rules/003-project-guideline.md` and `AGENTS.md`. Builds after each phase with `xcodebuild` and runs the review flow at the end.
 
 **When to use:** Everything concrete in the flow — features, milestones, or named plans.
 
@@ -56,13 +56,13 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 
 **What it does not do:** It never commits or pushes — that stays with `@push`.
 
-**Workflow:** Set up the plan in `docs/flow.md` (or describe it inline) → `@implement <phase>` → it builds → it calls `@review` → fixes approved issues → reports summary.
+**Workflow:** Set up the plan in `docs/implementation.md` (or describe it inline) → `@implement <phase>` → it builds → it calls `@review` → fixes approved issues → reports summary.
 
 ---
 
 ## `@review`
 
-**What it does:** Runs `git status` + `git diff`, checks the changes against project conventions (MVVM template, glove-friendly rules, no identity leaks), and reports a list of issues: `file:line`, problem, suggested fix — split into **must fix** and **suggestions**. If issues exist it proposes a fixing plan and asks for approval before touching files.
+**What it does:** Runs `git status` + `git diff`, checks the changes against project conventions (project guideline, glove-friendly rules, no identity leaks), and reports a list of issues: `file:line`, problem, suggested fix — split into **must fix** and **suggestions**. If issues exist it proposes a fixing plan and asks for approval before touching files.
 
 **When to use:** After `@implement`, before `@push`. Also for reviewing any hand-made diff.
 
@@ -127,7 +127,7 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 ```
 1. @research MapKit route alternatives on iOS 26
    → report: limit info, overlay approach, recommendation
-2. User decision → plan in docs/flow.md (or as a to-do list)
+2. User decision → plan in docs/implementation.md (or as a to-do list)
 3. @implement Phase 2 Routing MVP
    → builds, then auto-runs @review
 4. @review → issues found → approve fixing plan → fixes
