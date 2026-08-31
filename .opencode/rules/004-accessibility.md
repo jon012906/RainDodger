@@ -1,7 +1,6 @@
-# Rain Dodger — Accessibility Guidelines
+# Accessibility — Rain Dodger
 
-Accessibility is not optional. Reference: `specs.md §7`. All new UI code is a11y-ready from the start.
-Targets: **WCAG 2.1 AA** and **MAS-C** (Apple Accessibility Standards).
+**Load when:** planning, implementing, or reviewing any UI code. Accessibility is not optional — reference `docs/specs.md §7`. All new UI code is a11y-ready from the start. Targets: **WCAG 2.1 AA** and **MAS-C** (Apple Accessibility Standards).
 
 ## 1. Why It Matters
 
