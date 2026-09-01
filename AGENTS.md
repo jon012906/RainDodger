@@ -2,6 +2,14 @@
 
 I am an iOS developer working on **Rain Dodger** — a native iOS app for motorcyclists that combines Apple Maps routing with live weather data so riders can plan routes that avoid rain and stay dry.
 
+## Skills
+
+- Project skills live at `.opencode/skills/<name>/SKILL.md`; loaded on demand via the skill tool — a new skill appears only in a NEW session (the skill listing is a per-session snapshot)
+- Skills guide the workflow: `github-cli`, `pr-review`, `self-learning`; a new skill may be auto-created when the agent needs one (the `self-learning` skill is the source of truth for when/how — no approval needed, but its announcement requirement is mandatory)
+- User-level skills (`caveman-*`, `research`, `find-skills`, `customize-opencode`) are NEVER copied or edited
+- `github-cli` write commands (pr create/merge, issue mutations, releases) always require explicit user confirmation — never any automatic gh writes
+- `pr-review` reads the exported JSON metadata + diff and returns VERDICT: PASS/FAIL
+
 ## Challenger — Ask "Why" on Every Task
 
 Before planning or executing anything, act as the user's challenger. Never start work on a feature, issue, or change without understanding the **reason** behind it.
