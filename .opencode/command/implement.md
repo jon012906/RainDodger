@@ -13,7 +13,7 @@ The user has invoked `@implement`. Execute the plan or phase that is currently i
    - No comments unless asked; self-documenting code
    - Keep the review handoff checklist format from `.opencode/rules/002-workflow.md`
 3. Implement the plan phase by phase, in order. After each phase:
-   - Verify the change compiles by running `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'` (adjust simulator name as available)
+   - Verify the change compiles by running `./.opencode/scripts/xcode-tools.sh build` (canonical path; simulator from `simulator-config.json`/`RD_SIM`)
    - Fix any build errors before moving to the next phase
 4. When the full plan/phase is implemented, run the review workflow (`@review`) on the generated output:
    - The review identifies issues and reports them to the user with `file:line`, problem, and suggested fix

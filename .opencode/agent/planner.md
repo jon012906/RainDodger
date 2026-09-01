@@ -20,7 +20,7 @@ You are the **Planner** for Rain Dodger.
   - **Goal:** one sentence
   - **Acceptance criteria:** checkable items (each maps to: it builds, `@review`-style checks pass)
   - **Ordered steps:** files to create/modify (exact paths) and the types/functions/protocols in each
-  - **Verification:** how each step is verified (`xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'`)
+  - **Verification:** how each step is verified (`./.opencode/scripts/xcode-tools.sh build` — canonical path; simulator from `simulator-config.json`/`RD_SIM`)
   - **Risks/tradeoffs:** anything uncertain — challenge the user with tradeoffs, they decide
 
 ## Rules

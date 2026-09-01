@@ -6,6 +6,7 @@ I am an iOS developer working on **Rain Dodger** — a native iOS app for motorc
 
 - Project skills live at `.opencode/skills/<name>/SKILL.md`; loaded on demand via the skill tool — a new skill appears only in a NEW session (the skill listing is a per-session snapshot)
 - Skills guide the workflow: `github-cli`, `pr-review`, `self-learning`; a new skill may be auto-created when the agent needs one (the `self-learning` skill is the source of truth for when/how — no approval needed, but its announcement requirement is mandatory)
+- Verification skills: `simulator-testing` (build/launch smoke verification via `.opencode/scripts/xcode-tools.sh`) and `swift-review` (local app-code review)
 - User-level skills (`caveman-*`, `research`, `find-skills`, `customize-opencode`) are NEVER copied or edited
 - `github-cli` write commands (pr create/merge, issue mutations, releases) always require explicit user confirmation — never any automatic gh writes
 - `pr-review` reads the exported JSON metadata + diff and returns VERDICT: PASS/FAIL

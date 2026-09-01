@@ -90,8 +90,8 @@ RainDodger/
 
 ### Build & Verify
 
-- Build and verify with the Xcode project (`RainDodger.xcodeproj`) — target `RainDodger`
-- When asked to verify, run `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'` (adjust simulator name as available)
+- Build and verify through the project script — the canonical path: `./.opencode/scripts/xcode-tools.sh build` (`bash .opencode/scripts/xcode-tools.sh build` works too); target `RainDodger` (`RainDodger.xcodeproj`), log at `.opencode/tmp/xcodebuild.log`
+- Raw `xcodebuild` is the explicit fallback: `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=...'` — pick the destination via `.opencode/scripts/xcode-tools.sh` (config `simulator-config.json` / `RD_SIM`) or use the newest available iPhone simulator name from `xcodebuild -showdestinations`
 
 ### Code Style
 
