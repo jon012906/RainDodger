@@ -37,3 +37,4 @@ docs/diagrams/out/
 # Agent/log build outputs
 build.log
 build-diagrams.log
+.opencode/tmp/

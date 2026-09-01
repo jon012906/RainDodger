@@ -1,0 +1,5 @@
+{
+  "device": "iPhone 17",
+  "os": "iOS 26.5",
+  "note": "Pick simulator for xcode-tools.sh. 'os' may be blank to prefer newest available. RD_SIM env overrides."
+}
