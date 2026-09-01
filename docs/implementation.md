@@ -6,14 +6,14 @@ Living document that tracks the app from Xcode template to a working app, and re
 
 - Each phase is executed with `@implement <Phase>` (or ran as its own plan), then checked with `@review`.
 - Tick checkboxes as work completes; move a phase to `Done` only when verified.
-- Feature work always follows `.opencode/rules/003-project-guideline.md`; visual work follows `docs/design.md`; scope follows `docs/specs.md`.
+- Feature work always follows `.opencode/rules/003-project-guideline.md`; visual work follows the feature's design doc in `docs/designs/`; scope follows `docs/specs/spec-guide.md`.
 - Never commit or push here — the user does it explicitly with `@push`.
 
 ## Phase 0 — Baseline (current state)
 
 - [x] Xcode project `RainDodger.xcodeproj` builds on iPhone 16 simulator
 - [x] SwiftData `ModelContainer` wired in `RainDodgerApp.swift`
-- [x] Docs in place: `specs.md`, `design.md`, `.opencode/rules/003-project-guideline.md`
+- [x] Docs in place: `docs/specs/spec-guide.md`, `docs/template/design.md`, `.opencode/rules/003-project-guideline.md`
 - [ ] Template `Item` model replaced by domain models (see Phase 2)
 
 ## Phase 1 — Foundation
@@ -47,7 +47,7 @@ Goal: per-segment rain probability over every route, ranked driest-first.
 - [ ] Route polyline sampled every ~1 km (start → arrival)
 - [ ] `WeatherKit`: current conditions + minute forecast (60 min) + hourly at each sample coordinate
 - [ ] Per-segment rain chance blended from WeatherKit at arrival time per segment
-- [ ] Rain overlay drawn on map segments (color-coded per `design.md`: <30% / 30–60% / >60%)
+- [ ] Rain overlay drawn on map segments (color-coded per the rain-layer design doc in `docs/designs/`: <30% / 30–60% / >60%)
 - [ ] Dry route scoring: `score = w1 × ETA + w2 × rain exposure`; weights in config
 - [ ] Route cards show: "Driest" badge, "Fastest" badge with wet distance ("14 km of 40 km with rain ≥ 50%")
 - [ ] Offline degrade: route still shows, banner "live rain unavailable"
@@ -68,7 +68,7 @@ Goal: rider-ready app, not a demo.
 
 - [ ] Turn-by-turn with rain warnings ahead ("rain in 5 km")
 - [ ] Core ML short-term rain predictor blended with WeatherKit per segment
-- [ ] Design tokens from `design.md` applied (light + dark, typography, colors, monospaced rain %)
+- [ ] Design tokens from the feature design docs in `docs/designs/` applied (light + dark, typography, colors, monospaced rain %)
 - [ ] Haptics on ride start + rain warning
 - [ ] Glove-friendly audit: all targets ≥ 44 pt, high contrast, glanceable while mounted
 - [ ] Landscape (mounted) layout supported

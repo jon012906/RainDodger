@@ -10,7 +10,7 @@ PUPPET="$SRC_DIR/puppeteer-config.json"
 usage() {
   echo "Render Mermaid diagrams to SVG/PNG. Usage:"
   echo "  scripts/render-diagrams.sh [file.mmd ...]     render docs/diagrams/*.mmd -> out/"
-  echo "  scripts/render-diagrams.sh --embed file.mmd   render + print fenced block to paste into docs/design.md"
+  echo "  scripts/render-diagrams.sh --embed file.mmd   render + print fenced block to paste into docs/flows/"
   echo "  defaults to all docs/diagrams/*.mmd"
 }
 
@@ -48,7 +48,7 @@ if [ "$EMBED" -eq 1 ]; then
   for f in $FILE_LIST; do
     name=$(basename "$f" .mmd)
     echo
-    echo "// Paste into docs/design.md:"
+    echo "// Paste into docs/flows/:"
     echo "\`\`\`mermaid"
     cat "$f"
     echo "\`\`\`"
