@@ -26,39 +26,41 @@ Workflow loop: Think → Specify → Ask AI → Execute → Inspect → Test →
 
 ## Agent Workflow (Planner → Executor → Reviewer)
 
-Work is built through three specialized agents, defined in `.opencode/agent/`. Each has ONE job, runs as its own session, and is verified by the user at every hop.
+Work is built through three specialized agents, defined in `.opencode/agent/`. Each has ONE job, runs as its own session; the user verifies the plan and the verdict.
 
 | Agent | Job | Interaction |
 |---|---|---|
 | Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `specs.md`, `design.md`, `implementation.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
 | Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan. Reviews: own build errors only |
-| Reviewer | Verify Executor output against plan + criteria in an isolated session | Verdict: PASS/FAIL + issue lines. Never edits code |
+| Reviewer | Verify Executor output against plan + criteria in an isolated session; dispatch the review skill matching the change set (swift-review / design-review / pr-review), built-in fallback otherwise | Verdict: PASS/FAIL + issue lines. Never edits code. Runs immediately after the Executor (no user gate in between) |
 
 ```
-User intent ──► Planner ──plan + criteria──► User verify
-                                                 │
-                                                 ▼
-                              Reviewer ──diff/checks──► Executor ──code + build──► User verify
-                                  ▲                       ▲
-                                  └── issues (FAIL) ──────┘
-                                         │
-                                         ▼
-                                  Planner replans fix ────► Executor ... (loop until PASS)
+User intent ──► Planner ──plan + criteria──► User verify plan
+                                                  │
+                                                  ▼
+                     Reviewer ──diff/checks──► Executor ──code + build──► Reviewer ──verdict──► User verify
+                                ▲                       ▲
+                                └── issues (FAIL) ──────┘
+                                       │
+                                       ▼
+                                Planner replans fix ────► Executor ... (loop until PASS)
 ```
+
+Legend: the Reviewer runs immediately after the Executor — no user gate between them.
 
 Rules:
 - **Roles never merge:** Executor never reviews its own work; Reviewer never fixes issues; Planner never writes code.
 - **Separate sessions on purpose:** Executor and Reviewer must never be the same agent — independence (no self-approval/hallucination) is the point.
-- **User gates every hop:** the user verifies the plan, the execution result, and the verdict before the pipeline continues; final decision is the user's.
+- **User gates plan and verdict:** the user verifies the plan; the Reviewer runs automatically right after the Executor; the user verifies the verdict + checklist before the pipeline continues (next phase / fix loop / `@push`). Final decision stays with the user.
 - If the Reviewer fails a phase, the fix loop is: Reviewer issues → Planner fix plan → Executor implements → Reviewer re-verifies → repeat until PASS.
 - The user contributes more strongly on the plan activity: Planner drafts and challenges, user decides.
 - Never commit or push automatically — user does it explicitly with `@push`.
 
-## Review Handoff — User + Reviewer Confirm Before Continuing
+## Review Handoff — Executor → Reviewer (immediate) → User
 
-Every time a phase (or fix) finishes executing, the AI must stop and ask the user for confirmation before anything continues (next phase, push). The result is checked by **two reviewers: the user and the Reviewer agent**, and both must pass.
+Every time a phase (or fix) finishes executing, the AI hands off to the Reviewer immediately, then the user checks the result. The result is checked by **two reviewers: the Reviewer agent and the user**.
 
-1. **User check (checklist):** the AI stops with a short report + an openable review checklist:
+1. **Executor stops with build result + checklist:** the Executor's final message is the build result, blockers (if any), what to hand to the Reviewer, and an openable review checklist:
 
 ```
 Phase <N> done
@@ -66,16 +68,14 @@ Phase <N> done
 List to review (click to open):
 - [ ] <what to check> | <path/file>[:line]
 - [ ] <what to check> | <path/file>[:line]
-
-Review and confirm, or say what to change.
 ```
 
-2. **Reviewer check (verdict):** after the user's confirmation, the Reviewer agent verifies the same phase in a separate session and returns VERDICT: PASS/FAIL + issue lines.
+2. **Reviewer check (immediately):** the Reviewer agent verifies the same phase right after the Executor finishes, in a separate session, with no user confirmation in between. Returns VERDICT: PASS/FAIL + one-line issues.
 
-3. Only when **both** pass does the phase move on. If either fails, the user decides: fix now (Planner fix plan → Executor → re-check) or adjust the plan first.
+3. **User check (verdict + checklist):** the user verifies the checklist and the verdict. The phase moves on only when the Reviewer PASSes AND the user approves. If either fails or the user objects, the user decides: fix now (Planner fix plan → Executor → re-review) or adjust the plan first.
 
 - Every created/modified file is listed with the specific thing to verify (function, feature, view, logic), so the user knows why it matters — not just "file changed".
 - Paths are formatted as clickable references (`path/file.swift:line`), so the user can open them quickly.
 - The checkboxes cover the acceptance criteria of that phase — the user's tick marks are the approval gate.
-- The AI does NOT auto-continue to `@review` / next phase / `@push` until the user confirms (or explicitly says to proceed).
+- The Reviewer itself runs without a user gate; the AI does NOT auto-continue to the next phase / fix loop / `@push` until the Reviewer PASSes AND the user confirms (or explicitly says to proceed).
 - If a fix loop is running (Reviewer issues → Executor), the same checklist applies to the fixed phase before re-verification continues.

@@ -47,4 +47,4 @@ List to review (click to open):
 ```
 
 - One checklist line per file: the specific function/feature to verify + a clickable `path:line` reference.
-- Stop and wait for the user to confirm the checklist before reporting the phase as done and handing off; never auto-continue to the Review step.
+- After the build succeeds and the checklist is final, hand off immediately — the final message is the build result, blockers (if any), what to hand to the Reviewer, and the path:line checklist. The main session then launches the Reviewer right away, with no user gate in between (the user verifies after the Reviewer verdict, per `.opencode/rules/002-workflow.md`).
