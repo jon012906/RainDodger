@@ -37,7 +37,10 @@ showing the exact command and getting explicit user confirmation.
 - `gh issue list --state open --json number,title,url --jq '.[] | "\(.number) \(.title)"'`,
   `gh issue view <n> --json title,url,labels,assignees,milestone,state`
 - `gh repo view --json nameWithOwner,defaultBranchRef,url`
-- `gh search prs "repo:jon012906/RainDodger is:open"`, `gh search issues "<term>" --limit 10`
+- `gh search prs "repo:jon012906/RainDodger is:open"`, `gh search issues "<term>" --limit 10` —
+  if search errors on a new repo ("resources do not exist or you do not have
+  permission"), fall back to `gh pr list --state open` / `gh issue list` (search index
+  lags on new repos)
 - `gh api` GET requests (no writes)
 
 Keep outputs small: prefer `--json` with `--jq` projections. If raw output would be
