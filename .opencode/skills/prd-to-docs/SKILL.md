@@ -51,24 +51,24 @@ Not for:
     design doc must map.
   - `docs/specs/spec-guide.md` — §4 data flow + §5 scoring for the diagram.
 
-1. **Design doc** — write `docs/designs/<feature>.md` with all five template
+1. **Design doc** — write `docs/designs/<feature>.md` with all four template
    sections, mirroring design-review's §2 conformance so the doc passes
    review. Nothing left `TBD` on submit:
-   - §1 Design source: sources / asset locations / references filled in from
-     the spec.
+   - §1 Design source: screenshots (light + dark), asset locations, and
+     references filled in. The doc describes what the screenshots show —
+     UI/UX principles live in spec-guide §6, never here. When no screenshots
+     exist yet, flag it as an open question instead of inventing visuals.
    - §2 Screens: one section per screen — layout, components, and states
      (loading / empty / error / loaded); dark-mode notes per screen;
      weather/rain colors (`rainClear` / `rainLight` / `rainHeavy`,
      `routePrimary` / `routeAlternative`) and functional colors (`success` /
      `warning` / `danger` / `accent`) defined with **both light and dark
      values**; rain percentages in **monospaced digits**.
-   - §3 UI/UX principles: glanceable, glove-friendly hit targets (≥ 44 pt),
-     high contrast.
-   - §4 Accessibility: maps the `.opencode/rules/004-accessibility.md`
+   - §3 Accessibility: maps the `.opencode/rules/004-accessibility.md`
      checklist — VoiceOver, Dynamic Type, contrast 4.5:1 / 3:1 in light AND
      dark, ≥ 44 pt targets, Reduce Motion / Reduce Transparency, portrait +
      landscape (mounted).
-   - §5 Motion & interaction: transitions, rain overlay animation, haptics,
+   - §4 Motion & interaction: transitions, rain overlay animation, haptics,
      sheet presentation.
 
 2. **Data-flow diagram** — embed one **mermaid** diagram directly into
