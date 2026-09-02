@@ -20,11 +20,11 @@ Living document that tracks the app from Xcode template to a working app, and re
 
 Goal: repo-level skeleton every feature builds on. No visible features yet.
 
-- [ ] Feature folders created: `Models/`, `Services/`, `ViewModels/`, `Views/`
-- [ ] Service protocols with `async/await`: `WeatherService`, `DirectionsService`, `LocationService`
-- [ ] Mock live implementations for previews/tests
-- [ ] `Info.plist`: `NSLocationWhenInUseUsageDescription` added
-- [ ] WeatherKit entitlement enabled and configured in the project
+- [x] Feature folders created: `Models/`, `Services/`, `ViewModels/`, `Views/`
+- [x] Service protocols with `async/await`: `LocationService`, `DestinationSearchService` (`WeatherService`/`DirectionsService` deferred to Phase 2)
+- [x] Mock implementations for previews/tests: `MockLocationService`, `MockDestinationSearchService`
+- [x] `Info.plist`: `NSLocationWhenInUseUsageDescription` added
+- [ ] WeatherKit entitlement enabled and configured in the project (deferred — comes with the Phase 3 rain layer)
 - [ ] `AGENTS.md` conventions verify: no comments, modern SwiftUI (`@Observable`), max 4-line rule for VMs
 - [ ] Build passes, `@review` clean
 
@@ -87,4 +87,4 @@ Document every change made in each phase here — files added/modified, decision
 
 | Date | Phase | Change |
 |---|---|---|
-| | | |
+| 2026-09-02 | Phase 1 — feat/map-search | Added `RainDodger/Models/SearchResult.swift`; `RainDodger/Services/DestinationSearchService.swift` (protocol + `LiveDestinationSearchService` + `MockDestinationSearchService`), `RainDodger/Services/LocationService.swift` (protocol + `LiveLocationService` + `MockLocationService`); `RainDodger/ViewModels/MapSearchViewModel.swift`; `RainDodger/Views/MapSearchView.swift`, `RainDodger/Views/DestinationSearchField.swift`. Modified `RainDodger/ContentView.swift` (now hosts `MapSearchView` with Live services; template SwiftData list removed), `RainDodger/Info.plist` (`NSLocationWhenInUseUsageDescription` added), `docs/specs/spec-guide.md` (§9 workspace table filled for the branch). Decisions: protocol-first services with Live + mock impls per MVVM; 350 ms debounce via `Task.sleep` + cancellation in the VM; custom floating search field over `.searchable` (full control of states, a11y, layout); map accessories via `.mapControls` (verified against the iOS 26.5 SDK — `mapAccessoryVisibility` does not exist); user-location dot via `UserAnnotation()` (position-based `Map` init has no `showsUserLocation` in iOS 26); pin-drop camera animation gated on Reduce Motion. Deferred: WeatherKit entitlement, routing (`MKDirections`), SwiftData `Item` replacement. |

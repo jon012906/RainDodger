@@ -140,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `main` |
-| Feature folders (files this branch owns/adds) | `docs/` (specs, design, implementation) · `.opencode/command/` · `.opencode/agent/` |
-| Models | `_REPLACE_` (none yet — template `Item` model in `RainDodgerApp.swift`) |
-| Services | `_REPLACE_` |
-| ViewModels | `_REPLACE_` |
-| Views | `_REPLACE_` |
+| Branch | `docs/product-requirement` |
+| Feature folders (files this branch owns/adds) | `docs/specs/` · `docs/designs/` · `docs/flows/` · `docs/implementation.md` · `docs/specs/spec-guide.md §9` |
+| Models | `_REPLACE_` (none — docs-only branch) |
+| Services | `_REPLACE_` (none — docs-only branch) |
+| ViewModels | `_REPLACE_` (none — docs-only branch) |
+| Views | `_REPLACE_` (none — docs-only branch) |
 | Entry point files | `RainDodger/RainDodgerApp.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 
