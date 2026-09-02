@@ -8,7 +8,7 @@ _Usage: copy to `docs/flows/<feature>.md`, rename, and fill in._
 
 ## 2. Flow Diagram
 
-- TBD: mermaid or ASCII diagram — triggered by the events/requirements in `docs/specs/<feature>.md` and described by the UI in `docs/design/<feature>.md`
+- Reference the data-flow diagram embedded in `docs/specs/<feature>.md` §3 — do NOT duplicate it here. This section traces the user journey to that diagram and to the UI described in `docs/designs/<feature>.md`
 
 ## 3. Events & State Changes
 

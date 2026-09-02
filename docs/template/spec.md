@@ -15,6 +15,7 @@ _Usage: copy to `docs/specs/<feature>.md`, rename, and fill in._
 ## 3. Data Relations
 
 - TBD: which models are created/modified, and how they relate (SwiftData / value types)
+- Data-flow diagram: one embedded **mermaid** diagram visualizing this feature's data flow — rendered inline by GitHub, no separate source file. Drawn from spec-guide §4 Data Flow
 
 ## 4. Constraints
 
