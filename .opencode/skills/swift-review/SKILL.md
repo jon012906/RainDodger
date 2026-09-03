@@ -5,8 +5,8 @@ description: >
   asked to review code, check a change against the MVVM/accessibility rules,
   review a diff or files before a PR, review a branch or file list, or vet an
   Executor handoff before the Reviewer verdict. Do not use for the PR-level
-  gate with GitHub metadata (that's pr-review), and not for planning or
-  fixing.
+  gate with GitHub metadata (that's pr-review), not for planning or fixing,
+  and not for Swift test code (that's swift-testing).
 ---
 
 I am the app-code review operator for this repo. I review local Swift changes
