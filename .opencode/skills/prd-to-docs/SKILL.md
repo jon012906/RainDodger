@@ -83,8 +83,8 @@ Not for:
 3. **Flow doc** — write `docs/flows/<feature>.md` with all four template
    sections:
    - §1 User journey: start → end steps derived from the spec's Goal.
-   - §2 Flow diagram: reference the data-flow diagram embedded in
-     `docs/specs/<feature>.md` §4 — do NOT duplicate it here.
+   - §2 Flow diagram: embed a **mermaid** user-flow diagram (user flow, not
+     implementation detail), derived from the Main Journey steps.
    - §3 Events & state changes: doc-level states (idle / loading / loaded /
      failed), described as app behavior, not code.
    - §4 Edge cases: from the spec's constraints + spec-guide — offline

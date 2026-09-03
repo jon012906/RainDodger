@@ -1,19 +1,37 @@
-# Flow Template — <Feature Name>
+# Flow — <Feature Name>
 
 _Usage: copy to `docs/flows/<feature>.md`, rename, and fill in._
 
-## 1. User Journey
+Guiding questions: How does the rider move through the feature? Which spec requirement happens at each step? What app state changes? What edge cases appear?
 
-- TBD: steps the user takes through this feature (start → end state)
+## 1. Main Journey
+
+1. User opens app
+2. Searches destination
+3. Selects route
+4. Sees rain risk
+5. Starts ride
 
 ## 2. Flow Diagram
 
-- Reference the data-flow diagram embedded in `docs/specs/<feature>.md` §3 — do NOT duplicate it here. This section traces the user journey to that diagram and to the UI described in `docs/designs/<feature>.md`
+Use Mermaid for user flow, not implementation detail:
 
-## 3. Events & State Changes
+```mermaid
+flowchart TD
+  A[Open app] --> B[Search destination]
+  B --> C[Select route]
+  C --> D[See rain risk]
+  D --> E[Start ride]
+```
 
-- TBD: user events and how they change the app state (loading / error / loaded)
+## 3. Events and State Changes
+
+| Event | App State | Result |
+|---|---|---|
+| User types destination | loading | Search suggestions appear |
+| User selects destination | loading routes | Map requests route alternatives |
+| Weather fails | loadedWithoutWeather | Show route, hide rain overlay |
 
 ## 4. Edge Cases
 
-- TBD: offline, permission denied, empty states, rapid navigation
+Permission denied, no network, no route, rain data unavailable, user changes destination quickly.
