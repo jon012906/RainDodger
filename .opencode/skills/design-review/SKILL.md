@@ -55,18 +55,22 @@ Read-only: never edit design docs.
 2. **Design conformance** — against `docs/template/design.md`; cite the
    section, don't duplicate it. Nothing left `TBD` in a doc submitted for
    review:
-   - §1 Design source: screenshots/asset locations/references filled in;
-     UI/UX principles live in spec-guide §6, not in the design doc.
-   - §2 Screens: per-screen layout, components, states (loading / empty /
-     error / loaded), dark mode notes, landscape (mounted) notes. Weather/rain
+   - §1 Screens: each screen/state listed (empty / loading / loaded / error /
+     permission denied / offline) — per-state layout and behavior.
+   - §2 Layout: what appears where — map, cards, buttons, search field,
+     overlays; landscape (mounted) notes.
+   - §3 Components: reusable UI pieces (DestinationSearchField, RouteCard,
+     RainRiskBadge, StartRideButton). Weather/rain
      colors (`rainClear` / `rainLight` / `rainHeavy`, `routePrimary`,
      `routeAlternative`) and functional colors (`success` / `warning` /
      `danger` / `accent`) must be defined with both **light and dark** values;
      rain percentages use **monospaced digits**.
-   - §3 Accessibility: the design addresses `.opencode/rules/004-accessibility.md`
+   - §4 Light / Dark Mode: colors, contrast, map overlay behavior with both
+     **light and dark** values.
+   - §5 Accessibility: the design addresses `.opencode/rules/004-accessibility.md`
      requirements (VoiceOver, Dynamic Type, color contrast, ≥ 44 pt targets).
-   - §4 Motion & interaction: transitions, rain overlay animation, haptics,
-     sheet presentation.
+   - §6 Motion & Haptics: transitions, loading states, ride-start haptic,
+     warning haptic.
 
 3. **Accessibility** per `.opencode/rules/004-accessibility.md` §3 + §4:
    - Contrast: WCAG 2.1 AA 4.5:1 normal text / 3:1 large text and graphics,
@@ -83,8 +87,9 @@ Read-only: never edit design docs.
    unrelated screens or changes are scope creep. If the plan or scope itself is
    wrong, raise it as an issue and let the user decide.
 
-5. **Template coverage** — vs `docs/template/design.md`: all four sections
-   present (design source, screens, accessibility, motion);
+5. **Template coverage** — vs `docs/template/design.md`: all six sections
+   present (screens, layout, components, light/dark mode, accessibility,
+   motion/haptics);
    covered by step 2, re-verified at a glance here.
 
 ## Output format (matches .opencode/agent/reviewer.md)

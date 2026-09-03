@@ -2,36 +2,54 @@
 
 _Usage: copy to `docs/flows/<feature>.md`, rename, and fill in._
 
-Guiding questions: How does the rider move through the feature? Which spec requirement happens at each step? What app state changes? What edge cases appear?
+Guiding questions: How does the rider move through the feature? Which spec requirement happens at each step? What design state is on screen? What edge cases appear?
 
-## 1. Main Journey
+## 1. Related Docs
 
-1. User opens app
-2. Searches destination
-3. Selects route
-4. Sees rain risk
-5. Starts ride
+| Type | Path | Purpose |
+|---|---|---|
+| Spec | `docs/specs/<feature>.md` | Requirements, data, constraints, acceptance criteria |
+| Design | `docs/designs/<feature>.md` | Screens, UI states, accessibility, interactions |
 
-## 2. Flow Diagram
+## 2. Flow Goal
 
-Use Mermaid for user flow, not implementation detail:
+- User goal:
+- Start state:
+- End state:
+- Success outcome:
+
+## 3. Spec Coverage
+
+_Link this flow to specific requirements from the spec._
+
+| Spec ID | Requirement | Covered In Flow Step |
+|---|---|---|
+| R1 | TBD | Step 1 |
+| R2 | TBD | Step 3 |
+
+## 4. Design Coverage
+
+_Link this flow to screens and states from the design doc._
+
+| Design Section | Screen / State | Used In Flow Step |
+|---|---|---|
+| Design §2 | Empty state | Step 1 |
+| Design §2 | Loading state | Step 2 |
+| Design §2 | Loaded state | Step 3 |
+| Design §2 | Error state | Edge Case 1 |
+
+## 5. Main User Journey
+
+1. TBD
+2. TBD
+3. TBD
+
+## 6. Flow Diagram
 
 ```mermaid
 flowchart TD
-  A[Open app] --> B[Search destination]
-  B --> C[Select route]
-  C --> D[See rain risk]
-  D --> E[Start ride]
+  A["Start state"] --> B["User action"]
+  B --> C["Loading state"]
+  C --> D["Success state"]
+  C --> E["Error state"]
 ```
-
-## 3. Events and State Changes
-
-| Event | App State | Result |
-|---|---|---|
-| User types destination | loading | Search suggestions appear |
-| User selects destination | loading routes | Map requests route alternatives |
-| Weather fails | loadedWithoutWeather | Show route, hide rain overlay |
-
-## 4. Edge Cases
-
-Permission denied, no network, no route, rain data unavailable, user changes destination quickly.
