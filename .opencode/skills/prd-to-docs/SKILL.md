@@ -43,7 +43,7 @@ Not for:
   stop and ask the user.
 - **Outputs:** `docs/designs/<feature>.md`, `docs/flows/<feature>.md`
   (create the directories if missing), and the data-flow diagram embedded
-  in `docs/specs/<feature>.md` §3 Data Relations (added only if absent).
+  in `docs/specs/<feature>.md` §4 Data Model (added only if absent).
 - **Ground truth to read before writing:**
   - `docs/template/design.md` — the design-doc skeleton (5 sections).
   - `docs/template/flow.md` — the flow-doc skeleton (4 sections).
@@ -72,9 +72,9 @@ Not for:
      sheet presentation.
 
 2. **Data-flow diagram** — embed one **mermaid** diagram directly into
-   `docs/specs/<feature>.md` §3 Data Relations (NO separate `.mmd` source
+   `docs/specs/<feature>.md` §4 Data Model (NO separate `.mmd` source
    file — GitHub renders the fence inline). Add it only if the spec does not
-   already carry it. Drawn from the spec's §3 Data Relations + spec-guide §4
+   already carry it. Drawn from the spec's §4 Data Model + spec-guide §4
    Data Flow: Destination → MKDirections → 2–3 route alternatives → sample
    waypoints every ~1 km → WeatherKit (current / minute / hourly) + Core ML
    → per-segment rain chance + ETA → route cards Driest / Fastest + rain
@@ -84,7 +84,7 @@ Not for:
    sections:
    - §1 User journey: start → end steps derived from the spec's Goal.
    - §2 Flow diagram: reference the data-flow diagram embedded in
-     `docs/specs/<feature>.md` §3 — do NOT duplicate it here.
+     `docs/specs/<feature>.md` §4 — do NOT duplicate it here.
    - §3 Events & state changes: doc-level states (idle / loading / loaded /
      failed), described as app behavior, not code.
    - §4 Edge cases: from the spec's constraints + spec-guide — offline

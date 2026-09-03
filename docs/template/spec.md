@@ -1,26 +1,42 @@
-# Spec Template — <Feature Name>
+# Spec — <Feature Name>
 
 _Usage: copy to `docs/specs/<feature>.md`, rename, and fill in._
 
 ## 1. Goal
 
-- TBD: what problem does this feature solve, and why
+What problem does this solve for the rider?
 
-## 2. Requirements
+## 2. User Problem
 
-| # | Requirement | Priority | Notes |
+What is painful/confusing/risky today?
+
+## 3. Requirements
+
+| ID | Requirement | Priority | Notes |
 |---|---|---|---|
-| R1 | TBD | P0/P1/P2 | TBD |
+| R1 | User can search destination | P0 | Uses MapKit |
 
-## 3. Data Relations
+## 4. Data Model
 
-- TBD: which models are created/modified, and how they relate (SwiftData / value types)
-- Data-flow diagram: one embedded **mermaid** diagram visualizing this feature's data flow — rendered inline by GitHub, no separate source file. Drawn from spec-guide §4 Data Flow
+What models are needed?
+Example: Trip, RoutePlan, RainSegment, SavedDestination.
 
-## 4. Constraints
+Data relations can be visualized with an embedded **mermaid** diagram (rendered inline by GitHub, no separate source file):
 
-- TBD: framework limits, offline behavior, performance
+```mermaid
+erDiagram
+  TRIP ||--o{ ROUTE_PLAN : has
+  ROUTE_PLAN ||--o{ RAIN_SEGMENT : contains
 
-## 5. Acceptance Criteria
+## 5. Rules / Logic
 
-- TBD: how we know the feature is done
+How does the feature decide things?
+Example: driest route scoring, rain thresholds, offline fallback.
+
+## 6. Constraints
+
+iOS version, privacy, WeatherKit limits, offline behavior, performance.
+
+## 7. Acceptance Criteria
+
+Clear checklist proving the feature is done.

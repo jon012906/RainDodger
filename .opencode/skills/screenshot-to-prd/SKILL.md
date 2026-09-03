@@ -46,7 +46,7 @@ Not for:
 1. **Gather inputs** — images, feature name, then read before extracting:
    - `.opencode/branch-goals/<branch>.md` (`git branch --show-current`) —
      branch scope, must not be exceeded.
-   - `docs/template/spec.md` — the 5-section structure to fill.
+   - `docs/template/spec.md` — the 7-section structure to fill.
    - `docs/specs/spec-guide.md` — ground truth: §3 feature priority table
      (P0/P1/P2), §4 weather data model, §8 constraints.
 2. **Analyze the image** — screens, layout, components, controls, text,
@@ -59,9 +59,9 @@ Not for:
       the App Store Weather attribution requirement lives in §4.
    - Acceptance criteria → testable statements, never vague ("route shows
      the rain overlay" not "works well").
-4. **Map 1:1 to the template's 5 sections** — Goal, Requirements, Data
-   Relations, Constraints, Acceptance Criteria. No extra sections, no
-   reordering.
+4. **Map 1:1 to the template's 7 sections** — Goal, User Problem,
+   Requirements, Data Model, Rules / Logic, Constraints, Acceptance
+   Criteria. No extra sections, no reordering.
 5. **Ambiguity** — any detail not derivable from image + spec-guide: ask
    the user, never assume. Record open questions in the deliverable.
 
@@ -81,8 +81,10 @@ Not for:
 SPEC: docs/specs/<feature>.md
 
 Goal: <one line>
+User Problem: <one line>
 Requirements: <one line — n requirements, P0/P1/P2>
-Data Relations: <one line>
+Data Model: <one line>
+Rules / Logic: <one line>
 Constraints: <one line>
 Acceptance Criteria: <one line>
 
