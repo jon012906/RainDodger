@@ -31,9 +31,12 @@ build/
 .build/
 .swiftpm/
 
-# Generated diagram renders (scripts/render-diagrams.sh)
-docs/diagrams/out/
+# Generated diagram renders (.opencode/scripts/render-diagrams.sh) — out is covered by .opencode/tmp/ below
 
 # Agent/log build outputs
 build.log
 build-diagrams.log
+.opencode/tmp/
+
+# Local dev launcher (RainDodger/opencode.sh) — machine-local, never committed
+RainDodger/opencode.sh

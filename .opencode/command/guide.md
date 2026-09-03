@@ -43,7 +43,7 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 
 ## `@implement`
 
-**What it does:** Executes the plan or phase in progress (from `$ARGUMENTS` or the session's to-do list) following `.opencode/rules/003-project-guideline.md` and `AGENTS.md`. Builds after each phase with `xcodebuild` and runs the review flow at the end.
+**What it does:** Executes the plan or phase in progress (from `$ARGUMENTS` or the session's to-do list) following `.opencode/rules/003-project-guideline.md` and `AGENTS.md`. Builds after each phase via `.opencode/scripts/xcode-tools.sh build` and runs the review flow at the end.
 
 **When to use:** Everything concrete in the flow — features, milestones, or named plans.
 
@@ -56,13 +56,13 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 
 **What it does not do:** It never commits or pushes — that stays with `@push`.
 
-**Workflow:** Set up the plan in `docs/implementation.md` (or describe it inline) → `@implement <phase>` → it builds → it calls `@review` → fixes approved issues → reports summary.
+**Workflow:** Set up the plan in `docs/implementation.md` (or describe it inline) → `@implement <phase>` → it builds → it calls `@review` (read-only: reports issues + proposed fix plan) → Executor applies the approved fixes → reports summary.
 
 ---
 
 ## `@review`
 
-**What it does:** Runs `git status` + `git diff`, checks the changes against project conventions (project guideline, glove-friendly rules, no identity leaks), and reports a list of issues: `file:line`, problem, suggested fix — split into **must fix** and **suggestions**. If issues exist it proposes a fixing plan and asks for approval before touching files.
+**What it does:** Dispatches the review skill matching the change topic (`swift-review` for Swift code, `design-review` for design docs, `pr-review` for GitHub PR context) and follows its procedure. Read-only: reports findings as `file:line` issues split into **must fix** and **suggestions**. If issues exist it proposes an ordered fixing plan and asks for approval — the Executor executes the fixes (Planner fix loop), then the review re-runs on the updated diff.
 
 **When to use:** After `@implement`, before `@push`. Also for reviewing any hand-made diff.
 
@@ -141,4 +141,5 @@ This project ships custom opencode commands in `.opencode/command/`. This guide 
 - Every feature: Model + Service (protocol) + `@MainActor @Observable` ViewModel + View.
 - New SwiftData models registered in `RainDodgerApp.swift` `Schema`.
 - Glove-first UI: ≥ 44 pt hit targets, high contrast, glanceable.
-- Verification: `xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'`.
+- Verification: `./.opencode/scripts/xcode-tools.sh build` (log at `.opencode/tmp/xcodebuild.log`).
+- Skills: `simulator-testing` for build/launch smoke verification, `swift-review` for local app-code review, `design-review` for design-doc review.

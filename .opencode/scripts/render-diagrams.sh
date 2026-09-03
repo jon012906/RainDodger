@@ -1,17 +1,17 @@
 #!/bin/sh
 set -eu
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC_DIR="$ROOT/docs/diagrams"
-OUT_DIR="$SRC_DIR/out"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SRC_DIR="$ROOT/docs/specs"
+OUT_DIR="$ROOT/.opencode/tmp/diagram-out"
 LOG="$ROOT/build-diagrams.log"
-PUPPET="$SRC_DIR/puppeteer-config.json"
+PUPPET="$(dirname "$0")/puppeteer-config.json"
 
 usage() {
   echo "Render Mermaid diagrams to SVG/PNG. Usage:"
-  echo "  scripts/render-diagrams.sh [file.mmd ...]     render docs/diagrams/*.mmd -> out/"
-  echo "  scripts/render-diagrams.sh --embed file.mmd   render + print fenced block to paste into docs/design.md"
-  echo "  defaults to all docs/diagrams/*.mmd"
+  echo "  .opencode/scripts/render-diagrams.sh [file.mmd ...]     render docs/specs/*.mmd -> .opencode/tmp/diagram-out/"
+  echo "  .opencode/scripts/render-diagrams.sh --embed file.mmd   render + print fenced block to paste into docs/specs/"
+  echo "  defaults to all docs/specs/*.mmd"
 }
 
 EMBED=0
@@ -48,7 +48,7 @@ if [ "$EMBED" -eq 1 ]; then
   for f in $FILE_LIST; do
     name=$(basename "$f" .mmd)
     echo
-    echo "// Paste into docs/design.md:"
+    echo "// Paste into docs/specs/:"
     echo "\`\`\`mermaid"
     cat "$f"
     echo "\`\`\`"

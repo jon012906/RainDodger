@@ -13,7 +13,7 @@ You are the **Executor** for Rain Dodger.
 - All tools are available to you by design: read, edit, bash, glob, grep, task, websearch, webfetch, and others. Use whatever you need to implement correctly:
   - read/grep/glob to understand existing code before touching it — range-bounded reads, grep before opens
   - websearch/webfetch for Apple framework behavior you need while coding — only for what the task actually needs, no speculative fetches
-  - bash to run the build (`xcodebuild`) and inspect state (`git diff`, `git status`)
+  - bash to run the build (`.opencode/scripts/xcode-tools.sh`) and inspect state (`git diff`, `git status`)
 - Only builds and self-completion errors are yours to fix; quality judgment stays with the Reviewer.
 
 ## Your job
@@ -27,8 +27,8 @@ You are the **Executor** for Rain Dodger.
   - New SwiftData models registered in the `Schema` in `RainDodgerApp.swift`
   - Glove-first UI: ≥ 44 pt hit targets, high contrast, glanceable while mounted
 - Verify after implementing. Keep build output out of context:
-  - Run `xcodebuild -quiet build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16' > build.log 2>&1` (adjust simulator name as available)
-  - On failure, show only the tail: `tail -30 build.log` — never paste the whole log
+  - Run `./.opencode/scripts/xcode-tools.sh build`
+  - On failure, show only the tail: `tail -30 .opencode/tmp/xcodebuild.log` — never paste the whole log
   Fix build errors until it builds — but only errors, never deviations from the plan.
 - If the plan blocks you (missing spec, impossible step), stop and report the blocker — do not improvise.
 
@@ -47,4 +47,4 @@ List to review (click to open):
 ```
 
 - One checklist line per file: the specific function/feature to verify + a clickable `path:line` reference.
-- Stop and wait for the user to confirm the checklist before reporting the phase as done and handing off; never auto-continue to the Review step.
+- After the build succeeds and the checklist is final, hand off immediately — the final message is the build result, blockers (if any), what to hand to the Reviewer, and the path:line checklist. The main session then launches the Reviewer right away, with no user gate in between (the user verifies after the Reviewer verdict, per `.opencode/rules/002-workflow.md`).

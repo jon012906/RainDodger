@@ -53,6 +53,14 @@ Rain Dodger keeps all of that — same mental model — and adds a decision laye
 | Persistence | SwiftData | Trips, saved destinations, route plans |
 | Async | Swift concurrency | `async/await`, `@MainActor` ViewModels |
 
+### No Third-Party Weather API
+
+- MapKit + WeatherKit is the complete stack — no OpenWeather / RainViewer / AccuWeather SDK, no weather API key
+- MapKit covers maps + routing only; WeatherKit covers current conditions + minute (next 60 min) + hourly/daily forecast at any coordinate (≈500k calls/mo included in the Apple Developer Program membership)
+- One data source = no forecast disagreement between vendors, one network surface to debug
+- App Store listing must include the required Apple Weather attribution
+- **Excluded P2+ option:** live radar imagery (moving rain cells on the map). WeatherKit has forecast numbers per point, not radar tiles; a map rain-radar overlay would need a third party (e.g. RainViewer) — deferred until P2, decide then
+
 ### Core ML Strategy
 
 - Train (offline / via Create ML or Python + `coremltools`) a model on historical weather + radar data to predict precipitation probability at a (latitude, longitude, time) point
@@ -132,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `main` |
-| Feature folders (files this branch owns/adds) | `docs/` (specs, design, implementation) · `.opencode/command/` · `.opencode/agent/` |
-| Models | `_REPLACE_` (none yet — template `Item` model in `RainDodgerApp.swift`) |
-| Services | `_REPLACE_` |
-| ViewModels | `_REPLACE_` |
-| Views | `_REPLACE_` |
+| Branch | `docs/product-requirement` |
+| Feature folders (files this branch owns/adds) | `docs/specs/` · `docs/designs/` · `docs/flows/` · `docs/implementation.md` · `docs/specs/spec-guide.md §9` |
+| Models | `_REPLACE_` (none — docs-only branch) |
+| Services | `_REPLACE_` (none — docs-only branch) |
+| ViewModels | `_REPLACE_` (none — docs-only branch) |
+| Views | `_REPLACE_` (none — docs-only branch) |
 | Entry point files | `RainDodger/RainDodgerApp.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 

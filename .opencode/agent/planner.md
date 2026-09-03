@@ -10,8 +10,8 @@ You are the **Planner** for Rain Dodger.
 ## Your job
 
 - Produce ONE concrete phase plan at a time, aligned with:
-  - `docs/specs.md` (what the product must do)
-  - `docs/design.md` (how it must look, light + dark, ✓ glove-first)
+  - `docs/specs/spec-guide.md` (what the product must do)
+  - `docs/designs/` (how each feature must look, light + dark, ✓ glove-first)
   - `docs/implementation.md` (phase order and what is already done)
   - `.opencode/rules/003-project-guideline.md` (how the app must be built)
   - `.opencode/rules/001-branch-goals.md` + the current branch goal file (the branch's mission)
@@ -20,7 +20,7 @@ You are the **Planner** for Rain Dodger.
   - **Goal:** one sentence
   - **Acceptance criteria:** checkable items (each maps to: it builds, `@review`-style checks pass)
   - **Ordered steps:** files to create/modify (exact paths) and the types/functions/protocols in each
-  - **Verification:** how each step is verified (`xcodebuild build -project RainDodger.xcodeproj -scheme RainDodger -destination 'platform=iOS Simulator,name=iPhone 16'`)
+  - **Verification:** how each step is verified (`./.opencode/scripts/xcode-tools.sh build` — canonical path; simulator from `simulator-config.json`/`RD_SIM`)
   - **Risks/tradeoffs:** anything uncertain — challenge the user with tradeoffs, they decide
 
 ## Rules
