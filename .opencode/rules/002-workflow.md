@@ -30,7 +30,7 @@ Work is built through three specialized agents, defined in `.opencode/agent/`. E
 
 | Agent | Job | Interaction |
 |---|---|---|
-| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `specs.md`, `design.md`, `implementation.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
+| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `docs/specs/spec-guide.md`, `docs/designs/`, `docs/implementation.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
 | Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan. Reviews: own build errors only |
 | Reviewer | Verify Executor output against plan + criteria in an isolated session; dispatch the review skill matching the change set (swift-review / design-review / pr-review), built-in fallback otherwise | Verdict: PASS/FAIL + issue lines. Never edits code. Runs immediately after the Executor (no user gate in between) |
 

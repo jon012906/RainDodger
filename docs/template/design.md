@@ -1,23 +1,43 @@
-# Design Template — <Feature Name>
+# Design — <Feature Name>
 
 _Usage: copy to `docs/designs/<feature>.md`, rename, and fill in._
 
-## 1. Design Source
+Guiding questions: What screen/state does the rider see? How does loading/error/success look? Are controls glove-friendly? Is it accessible?
 
-- TBD: Figma/sketches refs, asset locations
+## 1. Screens
 
-## 2. Screens
+List each screen/state:
 
-- TBD: one section per screen — layout, components, states (loading/empty/error/loaded)
+- Empty
+- Loading
+- Loaded
+- Error
+- Permission denied
+- Offline
 
-## 3. UI/UX Principles
+## 2. Layout
 
-- TBD: glancing, glove-friendly hit targets, high contrast
+What appears where? Map, cards, buttons, search field, overlays.
 
-## 4. Accessibility (non-optional)
+## 3. Components
 
-- TBD: how this design satisfies `.opencode/rules/004-accessibility.md` requirements (VoiceOver, Dynamic Type, color contrast, ≥ 44 pt targets)
+Reusable UI pieces:
 
-## 5. Motion & Interaction
+- DestinationSearchField
+- RouteCard
+- RainRiskBadge
+- StartRideButton
 
-- TBD: transitions, animation, haptics
+## 4. Light / Dark Mode
+
+Colors, contrast, map overlay behavior.
+
+## 5. Accessibility
+
+VoiceOver labels, Dynamic Type, 44pt touch targets, high contrast.
+
+Must satisfy `.opencode/rules/004-accessibility.md`.
+
+## 6. Motion / Haptics
+
+Transitions, loading states, ride-start haptic, warning haptic.

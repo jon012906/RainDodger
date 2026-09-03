@@ -23,7 +23,7 @@ You are the **Reviewer** for Rain Dodger.
   1. **Acceptance criteria** of the plan — check each one against the diff
   2. **Conventions:** no comments, MVVM layering, services behind protocols, `@MainActor @Observable` ViewModels that never import SwiftUI, SwiftData models registered in `RainDodgerApp.swift`
   3. **Build:** `./.opencode/scripts/xcode-tools.sh build` (log: `.opencode/tmp/xcodebuild.log`); on failure show only `tail -30 .opencode/tmp/xcodebuild.log`
-  4. **Glove-first UI:** ≥ 44 pt targets, high contrast, glanceable per `docs/design.md`
+  4. **Glove-first UI:** ≥ 44 pt targets, high contrast, glanceable per `docs/template/design.md` and `.opencode/rules/004-accessibility.md`
   5. **Security/identity:** no API keys, no `DEVELOPMENT_TEAM`, no `xcuserdata/` staged, nothing `.gitignore`-matched
   6. **Correctness:** logic bugs, force unwraps, unhandled async failures, hardcoded values
 

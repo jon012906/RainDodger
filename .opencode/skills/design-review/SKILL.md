@@ -3,10 +3,10 @@ name: design-review
 description: >
   Review Rain Dodger design docs against the project design rules. Use when
   asked to review a design doc (docs/designs/*.md), check a design change
-  against docs/design.md or the accessibility rules (004), vet a feature
-  design before implementation, or as the Reviewer when the change set is
-  design files. Do not use for Swift code review (that's swift-review), the
-  GitHub PR gate (that's pr-review), planning, or fixing.
+  against docs/template/design.md or the accessibility rules (004), vet a
+  feature design before implementation, or as the Reviewer when the change
+  set is design files. Do not use for Swift code review (that's swift-review),
+  the GitHub PR gate (that's pr-review), planning, or fixing.
 ---
 
 I am the design review operator for this repo. I review design docs against
@@ -16,8 +16,7 @@ matching `.opencode/agent/reviewer.md`.
 ## When to use
 
 - Reviewing a design doc or design change before implementation.
-- As the Reviewer, when the change set is `docs/designs/*.md` or a
-  `docs/design.md` change.
+- As the Reviewer, when the change set is `docs/designs/*.md`.
 - User asks "review this design", "does this design pass the project rules?",
   "is this design ready to implement?".
 
@@ -32,7 +31,7 @@ Not for:
 ## Input contract
 
 - **Scope target:** design docs under `docs/designs/`; the judging rules are
-  `docs/design.md` (global design spec) and `.opencode/rules/004-accessibility.md`
+  `docs/template/design.md` (design baseline) and `.opencode/rules/004-accessibility.md`
   (a11y requirements).
 - Feature spec `docs/specs/*.md` if applicable — feature-scoped specs that
   constrain the design.
@@ -53,23 +52,25 @@ Read-only: never edit design docs.
    - `$ARGUMENTS` — if the user named specific files/paths, scope to those.
    - Read `.opencode/branch-goals/<branch>.md` if present before judging scope.
 
-2. **Global design conformance** — against `docs/design.md`; cite the section,
-   don't duplicate it:
-   - §2 Color palette: every token has both **light and dark** values; weather/
-     rain colors (`rainClear` / `rainLight` / `rainHeavy`, `routePrimary`,
+2. **Design conformance** — against `docs/template/design.md`; cite the
+   section, don't duplicate it. Nothing left `TBD` in a doc submitted for
+   review:
+   - §1 Screens: each screen/state listed (empty / loading / loaded / error /
+     permission denied / offline) — per-state layout and behavior.
+   - §2 Layout: what appears where — map, cards, buttons, search field,
+     overlays; landscape (mounted) notes.
+   - §3 Components: reusable UI pieces (DestinationSearchField, RouteCard,
+     RainRiskBadge, StartRideButton). Weather/rain
+     colors (`rainClear` / `rainLight` / `rainHeavy`, `routePrimary`,
      `routeAlternative`) and functional colors (`success` / `warning` /
-     `danger` / `accent`) are defined.
-   - §3 Typography: styles sized (Large Title, Title, Body, Caption, Route
-     ETA); rain percentages use **monospaced digits**.
-   - §4 Spacing & radii: spacing/corner radius tokens defined; min hit target
-     ≥ 44 pt for all tappable elements.
-   - §5 Iconography: icons specified (SF Symbol or custom); route line stroke
-     style.
-   - §6 Screens: per-screen layout, components, states (loading / empty /
-     error / loaded), dark mode notes, landscape (mounted) notes.
-   - §7 Component inventory: every reusable component has a spec.
-   - §8 Motion & interaction: transitions, rain overlay animation, haptics,
-     sheet presentation.
+     `danger` / `accent`) must be defined with both **light and dark** values;
+     rain percentages use **monospaced digits**.
+   - §4 Light / Dark Mode: colors, contrast, map overlay behavior with both
+     **light and dark** values.
+   - §5 Accessibility: the design addresses `.opencode/rules/004-accessibility.md`
+     requirements (VoiceOver, Dynamic Type, color contrast, ≥ 44 pt targets).
+   - §6 Motion & Haptics: transitions, loading states, ride-start haptic,
+     warning haptic.
 
 3. **Accessibility** per `.opencode/rules/004-accessibility.md` §3 + §4:
    - Contrast: WCAG 2.1 AA 4.5:1 normal text / 3:1 large text and graphics,
@@ -86,9 +87,10 @@ Read-only: never edit design docs.
    unrelated screens or changes are scope creep. If the plan or scope itself is
    wrong, raise it as an issue and let the user decide.
 
-5. **Template compliance** — vs `docs/template/design.md`: all sections filled
-   in (design source, screens, UI/UX principles, accessibility, motion);
-   nothing left `TBD` in a doc submitted for review.
+5. **Template coverage** — vs `docs/template/design.md`: all six sections
+   present (screens, layout, components, light/dark mode, accessibility,
+   motion/haptics);
+   covered by step 2, re-verified at a glance here.
 
 ## Output format (matches .opencode/agent/reviewer.md)
 
