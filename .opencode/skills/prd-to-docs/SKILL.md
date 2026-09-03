@@ -6,11 +6,14 @@ description: >
   and the user wants its design doc, flow doc, and data-flow diagram
   generated — "generate design/flow docs from this spec", "make the
   data-flow diagram" — or as the Executor when the plan calls for producing
-  docs/designs/<feature>.md and docs/flows/<feature>.md (with the data-flow
-  diagram embedded in docs/specs/<feature>.md) from the spec. Do not use for
-  screenshot-to-PRD conversion (that's screenshot-to-prd), reviewing design
-  docs (that's design-review), the GitHub PR gate (that's pr-review),
-  or Swift app code (that's swift-review).
+  the design/flow docs for a spec — flat for a single spec
+  (docs/designs/<feature>.md + docs/flows/<feature>.md), mirrored in a
+  feature folder for a sliced spec (docs/designs/<feature>/<slice>.md +
+  docs/flows/<feature>/<slice>.md) — with the data-flow diagram embedded in
+  the input spec. Do not use for screenshot-to-PRD conversion
+  (that's screenshot-to-prd), reviewing design docs (that's design-review),
+  the GitHub PR gate (that's pr-review), or Swift app code (that's
+  swift-review).
 ---
 
 I am the spec-to-docs generator for this repo. I turn a finished feature
@@ -20,12 +23,16 @@ itself — matching the project templates and the rules the docs must pass.
 
 ## When to use
 
-- A finished `docs/specs/<feature>.md` exists and the user wants its design
-  doc, flow doc, and data-flow diagram generated.
+- A finished spec exists — `docs/specs/<feature>.md` (single-spec) or a
+  slice at `docs/specs/<feature>/<slice>.md` (decomposed by
+  `spec-decomposer`) — and the user wants its design doc, flow doc, and
+  data-flow diagram generated.
 - User asks "generate design/flow docs from this spec" or "make the
   data-flow diagram".
-- As the Executor, when the plan says to produce
-  `docs/designs/<feature>.md` and `docs/flows/<feature>.md` from the spec.
+- As the Executor, when the plan says to produce the design/flow docs for a
+  spec — flat `docs/designs/<feature>.md` + `docs/flows/<feature>.md`, or
+  mirrored `docs/designs/<feature>/<slice>.md` +
+  `docs/flows/<feature>/<slice>.md` for a sliced spec.
 
 Not for:
 
@@ -38,12 +45,16 @@ Not for:
 
 **Input contract**
 
-- **Input:** a finished `docs/specs/<feature>.md`. "Finished" = the user
-  confirms it — no `TBD` left in the spec. If the spec still has `TBD`s,
-  stop and ask the user.
-- **Outputs:** `docs/designs/<feature>.md`, `docs/flows/<feature>.md`
-  (create the directories if missing), and the data-flow diagram embedded
-  in `docs/specs/<feature>.md` §4 Data Model (added only if absent).
+- **Input:** a finished spec — `docs/specs/<feature>.md` (single-spec) or
+  `docs/specs/<feature>/<slice>.md` (sliced). "Finished" = the user confirms
+  it — no `TBD` left in the spec. If the spec still has `TBD`s, stop and
+  ask the user.
+- **Outputs:** design and flow docs that MIRROR the input spec's location —
+  `docs/specs/<feature>.md` → `docs/designs/<feature>.md` +
+  `docs/flows/<feature>.md`; `docs/specs/<feature>/<slice>.md` →
+  `docs/designs/<feature>/<slice>.md` + `docs/flows/<feature>/<slice>.md`
+  (create the directories if missing) — and the data-flow diagram embedded
+  in the input spec's §4 Data Model (added only if absent).
 - **Ground truth to read before writing:**
   - `docs/template/design.md` — the design-doc skeleton (6 sections).
   - `docs/template/flow.md` — the flow-doc skeleton (6 sections).
@@ -51,7 +62,9 @@ Not for:
     design doc must map.
   - `docs/specs/spec-guide.md` — §4 data flow + §5 scoring for the diagram.
 
-1. **Design doc** — write `docs/designs/<feature>.md` with all six template
+1. **Design doc** — write the design doc at the mirrored output path (e.g.
+   `docs/designs/<feature>.md` or `docs/designs/<feature>/<slice>.md`) with
+   all six template
    sections, mirroring design-review's §2 conformance so the doc passes
    review. Nothing left `TBD` on submit:
    - §1 Screens: one entry per state — empty / loading / loaded / error /
@@ -81,7 +94,9 @@ Not for:
    → per-segment rain chance + ETA → route cards Driest / Fastest + rain
    overlay + departure time.
 
-3. **Flow doc** — write `docs/flows/<feature>.md` with all six template
+3. **Flow doc** — write the flow doc at the mirrored output path (e.g.
+   `docs/flows/<feature>.md` or `docs/flows/<feature>/<slice>.md`) with all
+   six template
    sections:
    - §1 Related Docs: the spec and design paths for the feature, filled in.
    - §2 Flow goal: user goal, start/end state, success outcome — derived
@@ -109,10 +124,15 @@ Not for:
 - Never invent design or flow details absent from the spec — flag them as
   `TBD` or ask the user.
 - Never write app code — this skill generates docs only.
-- Read-only everywhere except the three outputs
-  (`docs/designs/<feature>.md`, `docs/flows/<feature>.md`, and the data-flow
-  diagram embedded in `docs/specs/<feature>.md`).
-- Use the correct output path `docs/designs/<feature>.md`.
+- Read-only everywhere except the outputs — the design and flow docs at
+  their mirrored paths (flat `docs/designs/<feature>.md` +
+  `docs/flows/<feature>.md` for single specs; folder
+  `docs/designs/<feature>/<slice>.md` + `docs/flows/<feature>/<slice>.md`
+  for sliced specs) and the data-flow diagram embedded in the input spec's
+  §4 Data Model.
+- Use the correct output paths — mirror the input spec's location (folder
+  `docs/<type>/<feature>/` for sliced specs, flat `docs/<type>/<feature>.md`
+  for single specs).
 - Colors must stay consistent with spec-guide's tokens — no new palette.
 - Flow events must trace back to spec requirements.
 - Scope: doc generation rules only — no app implementation content (no
@@ -123,10 +143,10 @@ Not for:
 Hand back to the user:
 
 ```
-Generated:
-- docs/designs/<feature>.md — <sections filled>
-- docs/flows/<feature>.md — <sections filled>
-- docs/specs/<feature>.md — embedded data-flow diagram (added if absent)
+Generated (paths mirror the input spec's location):
+- docs/designs/<feature>.md or docs/designs/<feature>/<slice>.md — <sections filled>
+- docs/flows/<feature>.md or docs/flows/<feature>/<slice>.md — <sections filled>
+- <input spec path> — embedded data-flow diagram (added if absent)
 
 Open questions / TBDs:
 - <anything flagged during generation, or "none">
