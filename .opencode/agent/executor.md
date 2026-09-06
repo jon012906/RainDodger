@@ -1,5 +1,6 @@
 ---
 description: Implements exactly the planned phase or fix plan, verifies the build, hands off. Never reviews or grades its own work.
+model: opencode-go/deepseek-v4-flash
 mode: subagent
 steps: 20
 permission: allow

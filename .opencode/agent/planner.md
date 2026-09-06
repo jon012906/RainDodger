@@ -1,5 +1,6 @@
 ---
 description: Turns intent into concrete phase plans. Read-only, never writes code or plans fixes for Reviewer issues.
+model: opencode-go/deepseek-v4-flash-vision-exp
 mode: subagent
 permission:
   edit: deny
