@@ -140,12 +140,13 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `feat/maps-screen` |
-| Feature folders (files this branch owns/adds) | `docs/specs/maps-screen.md` · `docs/designs/maps-screen.md` · `docs/flows/maps-screen.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
-| Models | `_REPLACE_` (none this branch — no domain model; `Item` untouched) |
-| Services | `RainDodger/Services/LocationService.swift` |
-| ViewModels | `RainDodger/ViewModels/MapViewModel.swift` |
-| Views | `RainDodger/Views/MapScreenView.swift` · `RainDodger/Views/DestinationSearchField.swift` · `RainDodger/Views/CompassControl.swift` · `RainDodger/Views/RecenterButton.swift` |
+| Branch | `feat/search-feature` |
+| Feature folders (files this branch owns/adds) | `docs/specs/search.md` · `docs/designs/search.md` · `docs/flows/search.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Models | `RainDodger/Models/SearchResult.swift` · `RainDodger/Models/RecentDestination.swift` |
+| Services | `RainDodger/Services/DestinationSearchService.swift` |
+| ViewModels | `RainDodger/ViewModels/SearchViewModel.swift` |
+| Views | `RainDodger/Views/SearchPage.swift` · `RainDodger/Views/SearchResultRow.swift` |
+| Extensions | `RainDodger/Extensions/ColorPalette.swift` · `RainDodger/Extensions/Typography.swift` |
 | Entry point files | `RainDodger/ContentView.swift` · `RainDodger/RainDodgerApp.swift` · `RainDodger/Info.plist` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 

@@ -1,5 +1,6 @@
 ---
 description: "Independently verifies Executor output against the plan and criteria. Dispatches the review skill matching the change set (swift-review / design-review / pr-review), built-in fallback. Read-only: reports pass/fail and issues, never fixes code."
+model: opencode-go/deepseek-v4-flash
 mode: subagent
 steps: 14
 permission:

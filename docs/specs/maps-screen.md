@@ -2,7 +2,7 @@
 
 ## 1. Goal
 
-Give the rider a familiar map "home screen" they already know before any route or weather logic exists: a full-screen interactive map showing where they are, a floating search bar for the destination they will type later, and one-thumb controls to recenter and orient. This branch builds the map shell — pan/zoom, user-location dot, recenter, compass, permission handling, and tap-stub search — so later branches can drop routes and rain onto a screen that already feels native.
+Give the rider a familiar map "home screen" they already know before any route or weather logic exists: a full-screen interactive map showing where they are, a floating search bar for the destination they will type later, and one-thumb controls to recenter and orient. This branch builds the map shell — pan/zoom, user-location dot, recenter, compass, permission handling, and the search entry point — so later branches can drop routes and rain onto a screen that already feels native.
 
 ## 2. User Problem
 
@@ -19,7 +19,7 @@ Give the rider a familiar map "home screen" they already know before any route o
 | R2 | User-location blue dot rendered | P0 | `UserAnnotation`; heading cone **deferred** to a later feature — dot only on this branch |
 | R3 | Recenter-to-location button | P0 | Returns/centers camera to user location from any pan position |
 | R4 | Compass | P0 | Core Location heading (`trueHeading` w/ `magneticHeading` fallback); always visible, dial rotates with heading and shows cardinal letters (N/E/S/W, top letter = facing); tap = north-up + recenter |
-| R5 | Search bar | P0 | Visual parity + tap stub ("coming soon" placeholder); real search (`MKLocalSearch`) **deferred** |
+| R5 | Search bar | P0 | Visual parity + tap opens the destination search page (see `docs/specs/search.md`); real search (`MKLocalSearch`) delivered by the search feature |
 | R7 | Permission states | P0 | Unknown → system prompt → authorized/denied; denied = explanatory overlay + Open Settings |
 | R8 | Accessibility | P0 | `.opencode/rules/004-accessibility.md`: ≥ 44 pt targets, VoiceOver labels/hints, Dynamic Type, Reduce Motion, contrast |
 
@@ -30,7 +30,7 @@ No new SwiftData models this branch — `Item` stays untouched. The map screen r
 - `CLLocation`: rider position; drives the blue dot and the recenter target.
 - `CLHeading`: device heading; drives the compass dial (`trueHeading`, `magneticHeading` fallback).
 
-`MapViewModel` holds ephemeral UI state (camera position, heading, permission state, stub visibility) — nothing is persisted.
+`MapViewModel` holds ephemeral UI state (camera position, heading, permission state, search entry) — nothing is persisted.
 
 ## 5. Rules / Logic
 
@@ -41,7 +41,7 @@ No new SwiftData models this branch — `Item` stays untouched. The map screen r
 - **Heading updates:** only while permission is authorized and the screen is visible (stop on disappear).
 - **Recenter:** camera returns to the user's last known location, any pan position.
 - **Permission flow:** unknown → request when-in-use → authorized (dot + heading) or denied (overlay + Open Settings).
-- **Search:** shows the coming-soon stub; no `MKLocalSearch`, no directions.
+- **Search:** opens the destination search page (see `docs/specs/search.md`); the coming-soon stub is removed on the search branch.
 
 ## 6. Constraints
 
@@ -58,8 +58,8 @@ No new SwiftData models this branch — `Item` stays untouched. The map screen r
 - [ ] Blue user dot rendered (`UserAnnotation`); no heading cone (explicitly deferred — spec/design/flow/docs must not promise one)
 - [ ] Compass: dial driven by Core Location heading (true w/ magnetic fallback), always visible, cardinal letters rotate (top letter = facing), tap = north-up + recenter, 44 pt target, VoiceOver label/value/hint, Reduce Motion respected
 - [ ] Recenter: button pans camera to user location from anywhere
-- [ ] Search: tap shows the coming-soon stub with an accessible announcement
+- [ ] Search: tap opens the destination search page (see `docs/specs/search.md`)
 - [ ] Denied permission: explanatory overlay + Open Settings (44 pt)
 - [ ] Accessibility per `.opencode/rules/004-accessibility.md` (hit targets, VoiceOver, Dynamic Type)
 - [ ] `docs/implementation.md` logs a correction for the stale Phase-1 entries + this branch's docs/code phases
-- [ ] No out-of-scope framework introduced (no `MKDirections`, no WeatherKit, no third-party, no `MKLocalSearch`)
+- [ ] No out-of-scope framework introduced (no `MKDirections`, no WeatherKit, no third-party)

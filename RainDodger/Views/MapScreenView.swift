@@ -9,11 +9,18 @@ import SwiftUI
 import MapKit
 
 struct MapScreenView: View {
-    let viewModel: MapViewModel
+    @Bindable var viewModel: MapViewModel
+    let searchService: DestinationSearchService
 
+    @State private var searchViewModel: SearchViewModel
     @State private var cameraPosition: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+
+    init(viewModel: MapViewModel, searchService: DestinationSearchService) {
+        self.viewModel = viewModel
+        self.searchService = searchService
+        _searchViewModel = State(initialValue: SearchViewModel(searchService: searchService))
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -49,25 +56,33 @@ struct MapScreenView: View {
                 .padding(.horizontal, isLandscape ? 0 : 16)
                 .padding(.bottom, isLandscape ? 8 : 12)
             }
-            .overlay {
-                if viewModel.showComingSoon {
-                    ComingSoonStub(
-                        message: viewModel.comingSoonMessage,
-                        onDismiss: viewModel.dismissComingSoon
-                    )
-                    .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.95)))
-                }
+            .sheet(isPresented: $viewModel.isSearchPresented) {
+                SearchPage(viewModel: searchViewModel, onSelect: viewModel.selectDestination)
+                    .presentationDragIndicator(.visible)
             }
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: viewModel.showComingSoon)
         }
         .onAppear(perform: viewModel.onAppear)
         .onDisappear(perform: viewModel.onDisappear)
+        .onChange(of: viewModel.isSearchPresented) { _, presented in
+            if presented {
+                searchViewModel.searchCoordinate = viewModel.currentCoordinate
+            }
+        }
         .onChange(of: viewModel.cameraIntent) { _, intent in
             guard let intent else { return }
             switch intent {
             case .recenter, .resetNorthAndRecenter:
                 withAnimation {
                     cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                }
+            case .focusDestination(let coordinate):
+                withAnimation {
+                    cameraPosition = .region(
+                        MKCoordinateRegion(
+                            center: coordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    )
                 }
             }
             viewModel.consumeCameraIntent()
@@ -82,6 +97,9 @@ struct MapScreenView: View {
     private var map: some View {
         Map(position: $cameraPosition) {
             UserAnnotation()
+            if let destination = viewModel.selectedDestination {
+                Marker(destination.name, coordinate: destination.coordinate)
+            }
         }
         .mapStyle(.standard)
         .ignoresSafeArea()
@@ -118,5 +136,8 @@ private struct LocationErrorCard: View {
 }
 
 #Preview {
-    MapScreenView(viewModel: MapViewModel(locationService: MockLocationService()))
+    MapScreenView(
+        viewModel: MapViewModel(locationService: MockLocationService()),
+        searchService: MockDestinationSearchService()
+    )
 }

@@ -19,6 +19,18 @@ enum AuthorizationState: Equatable {
 enum CameraIntent: Equatable {
     case recenter
     case resetNorthAndRecenter
+    case focusDestination(CLLocationCoordinate2D)
+
+    static func == (lhs: CameraIntent, rhs: CameraIntent) -> Bool {
+        switch (lhs, rhs) {
+        case (.recenter, .recenter), (.resetNorthAndRecenter, .resetNorthAndRecenter):
+            return true
+        case let (.focusDestination(a), .focusDestination(b)):
+            return a.latitude == b.latitude && a.longitude == b.longitude
+        default:
+            return false
+        }
+    }
 }
 
 @MainActor
@@ -29,9 +41,10 @@ final class MapViewModel {
     private(set) var authorizationState: AuthorizationState = .unknown
     private(set) var cameraIntent: CameraIntent?
     private(set) var heading: CLLocationDirection?
-    private(set) var showComingSoon = false
-    private(set) var comingSoonMessage = ""
     private(set) var locationErrorMessage: String?
+    private(set) var selectedDestination: SearchResult?
+    private(set) var currentCoordinate: CLLocationCoordinate2D?
+    var isSearchPresented = false
 
     private var locationTask: Task<Void, Never>?
     private var headingTask: Task<Void, Never>?
@@ -78,11 +91,13 @@ final class MapViewModel {
     }
 
     func searchFieldTapped() {
-        showComingSoon(message: "Search is coming soon")
+        isSearchPresented = true
     }
 
-    func dismissComingSoon() {
-        showComingSoon = false
+    func selectDestination(_ result: SearchResult) {
+        selectedDestination = result
+        cameraIntent = .focusDestination(result.coordinate)
+        isSearchPresented = false
     }
 
     private func syncAuthorizationState() async {
@@ -125,8 +140,9 @@ final class MapViewModel {
 
     private func fetchCurrentLocation() async {
         do {
-            _ = try await locationService.currentLocation()
+            let location = try await locationService.currentLocation()
             guard !Task.isCancelled else { return }
+            currentCoordinate = location.coordinate
             locationErrorMessage = nil
         } catch let error as LocationError {
             guard !Task.isCancelled else { return }
@@ -155,10 +171,5 @@ final class MapViewModel {
         guard abs(difference) < 180 else { return nil }
         smoothedHeading = (current + difference * headingSmoothingFactor + 360).truncatingRemainder(dividingBy: 360)
         return smoothedHeading
-    }
-
-    private func showComingSoon(message: String) {
-        comingSoonMessage = message
-        showComingSoon = true
     }
 }

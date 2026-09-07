@@ -11,7 +11,7 @@
 
 - User goal: open the app and immediately see an interactive map at their location, easily orient it, and reach the search entry point.
 - Start state: app launch; no location permission decision yet.
-- End state: map at user location, blue dot visible, controls available; search tap shows the coming-soon stub.
+- End state: map at user location, blue dot visible, controls available; search tap opens the destination search page.
 - Success outcome: rider can pan/zoom freely, tap recenter to return to their position, read the compass (cardinal letters rotate with device heading), and tap it to reset to north-up — all without ever leaving the map screen.
 
 ## 3. Spec Coverage
@@ -22,7 +22,7 @@
 | R2 | User-location dot (no cone) | Step 3 |
 | R3 | Recenter-to-location button | Steps 6, 9 |
 | R4 | Compass (heading, always visible, cardinal letters, tap reset) | Steps 4, 7–10, 13 |
-| R5 | Search bar (visual + tap stub) | Step 11 |
+| R5 | Search bar (opens search page) | Step 11 |
 | R7 | Permission states | Steps 1–3, Edge case A |
 | R8 | Accessibility (44 pt, VoiceOver, Dynamic Type, Reduce Motion) | Step 11 (announcement); controls on all steps |
 
@@ -34,7 +34,7 @@
 | Design §1 | Permission requested (system) | Step 2 |
 | Design §1 | Loaded | Step 3 |
 | Design §1 | Denied | Edge case A |
-| Design §1 | Search stub | Step 11 |
+| Design §1 | Search page entry | Step 11 |
 | Design §2 | Layout (capsule, control stack, compass) | Steps 3, 6–12 |
 | Design §6 | Motion (dial, Reduce Motion) | Steps 6–12 |
 
@@ -50,14 +50,14 @@
 8. `trueHeading` drives the dial; `magneticHeading` fallback; outlier jumps ≥ 180° dropped (R4).
 9. Rider taps compass → map resets to north-up + recenters to user location (R4, R3).
 10. Screen disappears → heading updates stop (R4).
-11. Rider taps the search capsule → coming-soon stub, accessible announcement (R5, R8).
+11. Rider taps the search capsule → destination search page opens (R5, R8).
 
 ## 6. Edge Cases
 
 - **A. Denied permission:** system prompt denied → denied overlay with explanation + Open Settings (44 pt) (R7). Tap Open Settings → Settings app; on return the state re-checks and either goes to Loaded or shows the overlay again.
 - **B. No heading data yet:** map loads with dot; compass shows the dial upright (N at the top marker) until the first heading sample (R4).
 - **C. Heading sample outlier (≥ 180° jump):** sample dropped, dial keeps last value (R4).
-- **D. Search tap while denied:** still shows the stub — no new prompt (R5).
+- **D. Search tap while denied:** still opens the search page — no new prompt (R5).
 
 ## 7. Flow Diagram
 
@@ -78,8 +78,8 @@ flowchart TD
   M -->|"yes · R4"| N["Map resets north-up + recenter · R4·R3"]
   M -->|"no"| O{"Rider taps search capsule · R5"}
   N --> O
-  O -->|"tap"| P["Coming-soon stub + accessible announcement · R5·R8"]
-  P --> Q["Rider dismisses stub · back to map"]
+  O -->|"tap"| P["Destination search page opens · R5·R8"]
+  P --> Q["Rider selects a destination · back to map with pin"]
   Q --> H
   F --> R["Screen disappears · heading updates stop · R4"]
 ```

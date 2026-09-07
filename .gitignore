@@ -40,3 +40,6 @@ build-diagrams.log
 
 # Local dev launcher (RainDodger/opencode.sh) — machine-local, never committed
 RainDodger/opencode.sh
+
+# Local developer signing config (DEVELOPMENT_TEAM) — machine-local, never committed
+RainDodger/Config/Local.xcconfig
