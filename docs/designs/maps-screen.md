@@ -10,14 +10,14 @@ The feature is a single main screen with these states:
 - **Permission requested (system):** native iOS when-in-use prompt appears over the map; app shows the map beneath it.
 - **Denied:** in-app overlay on the map — explanatory text ("Rain Dodger needs your location to recenter and show the compass") + Open Settings button.
 - **Loaded:** full-screen map, blue user dot, bottom search capsule, top-trailing control stack (compass + recenter).
-- **Search stub:** tapping the search capsule (or mic) shows the coming-soon placeholder.
+- **Search entry:** tapping the search capsule opens the destination search page (see `docs/designs/search.md`).
 
 Offline/error of map tiles is handled by MapKit's standard behavior — no custom error state this branch.
 
 ## 2. Layout
 
 - **Map:** full-screen edge-to-edge, standard gestures (pan/zoom/pinch), standard MapKit style. `Map` (iOS 26 SwiftUI).
-- **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → stub.
+- **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → opens the search page.
 - **Control stack:** floating top-trailing, below the status bar, above the map: dark circular compass (white cardinal letters, top marker) above white circular recenter (dark location arrow). Each 44 pt+; stack stays clear of the bottom capsule.
 - **Compass:** always visible; dial rotates with device heading so the cardinal letter for the current heading sits at the top marker (N → E → S → W); tap → north-up + recenter.
 - **Blue dot:** centered on the user's location via `UserAnnotation` (no cone this branch).
@@ -32,11 +32,11 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 ## 3. Components
 
 - **MapScreenView** — composes the `Map`, overlays controls, owns the `MapViewModel`.
-- **DestinationSearchField** — the bottom capsule (magnifier, "Your Destination…", mic, avatar); tap → `ComingSoonStub`.
+- **DestinationSearchField** — the bottom capsule (magnifier, "Your Destination…", mic, avatar); tap → opens `SearchPage` (see `docs/designs/search.md`).
 - **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; always visible; tap → north-up + recenter.
 - **RecenterButton** — white circle, dark location arrow; pans camera to user location.
 - **LocationPermissionOverlay** — denied state: explanation + Open Settings (44 pt).
-- **ComingSoonStub** — placeholder card, accessible announcement on show ("Search is coming soon").
+- **SearchPage** — destination search page as a modal sheet; components in `docs/designs/search.md`.
 - **MockLocationService** — for previews: scripted headings 0° → 45° → 90° → 180°, static coordinate, configurable permission state.
 
 ## 4. Light / Dark Mode
@@ -67,7 +67,6 @@ Per `.opencode/rules/004-accessibility.md`:
 ## 6. Motion / Haptics
 
 - **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change.
-- **Reduce Motion:** dial repositions instantly, no animation; stub + overlay appear without movement.
+- **Reduce Motion:** dial repositions instantly, no animation; the search page uses the system sheet transition.
 - **Recenter:** default SwiftUI `Map` camera move (no custom animation); no follow-heading mode.
-- **Stub:** appears with a small standard presentation, announces via `AccessibilityNotification.Announcement`, dismisses on tap outside.
 - **No haptics required this branch** (deferred — no ride start, no warnings yet).
