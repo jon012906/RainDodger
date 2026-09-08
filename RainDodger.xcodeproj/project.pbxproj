@@ -48,17 +48,9 @@
 			isa = PBXGroup;
 			children = (
 				9B2E6EEA303D3BAC00BE3414 /* RainDodger */,
-				9B2E6EFD303D3BAD00BE3414 /* Config */,
+				9B2E6EFD303D3BAD00BE3414 /* RainDodger/Config */,
 				9B2E6EE9303D3BAC00BE3414 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		9B2E6EFD303D3BAD00BE3414 /* Config */ = {
-			isa = PBXGroup;
-			children = (
-				9B2E6EFB303D3BAD00BE3414 /* Local.xcconfig */,
-			);
-			path = "RainDodger/Config";
 			sourceTree = "<group>";
 		};
 		9B2E6EE9303D3BAC00BE3414 /* Products */ = {
@@ -67,6 +59,14 @@
 				9B2E6EE8303D3BAC00BE3414 /* RainDodger.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9B2E6EFD303D3BAD00BE3414 /* RainDodger/Config */ = {
+			isa = PBXGroup;
+			children = (
+				9B2E6EFB303D3BAD00BE3414 /* Local.xcconfig */,
+			);
+			path = RainDodger/Config;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

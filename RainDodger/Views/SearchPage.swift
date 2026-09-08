@@ -7,9 +7,39 @@
 
 import SwiftUI
 
+enum SearchContext {
+    case destination
+    case origin
+    case stop
+
+    var placeholder: String {
+        switch self {
+        case .destination: return "Your Destination…"
+        case .origin: return "Where from?"
+        case .stop: return "Add a stop"
+        }
+    }
+
+    var resultHint: String {
+        switch self {
+        case .destination: return "Double tap to select as destination"
+        case .origin: return "Double tap to select as origin"
+        case .stop: return "Double tap to select as stop"
+        }
+    }
+
+    var savesRecents: Bool {
+        switch self {
+        case .destination: return true
+        case .origin, .stop: return false
+        }
+    }
+}
+
 struct SearchPage: View {
     @Bindable var viewModel: SearchViewModel
     let onSelect: (SearchResult) -> Void
+    var context: SearchContext = .destination
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -46,7 +76,7 @@ struct SearchPage: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Color.secondary)
-                TextField("Your Destination…", text: $viewModel.query)
+                TextField(context.placeholder, text: $viewModel.query)
                     .font(.rdSearchField)
                     .focused($isFieldFocused)
                 if !viewModel.query.isEmpty {
@@ -144,10 +174,12 @@ struct SearchPage: View {
 
     private func rowButton(_ result: SearchResult) -> some View {
         Button {
-            viewModel.select(result)
+            if context.savesRecents {
+                viewModel.select(result)
+            }
             onSelect(result)
         } label: {
-            SearchResultRow(result: result)
+            SearchResultRow(result: result, hint: context.resultHint)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 16)

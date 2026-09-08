@@ -45,6 +45,7 @@ final class MapViewModel {
     private(set) var selectedDestination: SearchResult?
     private(set) var currentCoordinate: CLLocationCoordinate2D?
     var isSearchPresented = false
+    var isTripSheetPresented = false
 
     private var locationTask: Task<Void, Never>?
     private var headingTask: Task<Void, Never>?
@@ -98,6 +99,7 @@ final class MapViewModel {
         selectedDestination = result
         cameraIntent = .focusDestination(result.coordinate)
         isSearchPresented = false
+        isTripSheetPresented = true
     }
 
     private func syncAuthorizationState() async {

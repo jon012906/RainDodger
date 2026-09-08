@@ -15,7 +15,8 @@ struct ContentView: View {
     var body: some View {
         MapScreenView(
             viewModel: viewModel,
-            searchService: LiveDestinationSearchService(modelContext: modelContext)
+            searchService: LiveDestinationSearchService(modelContext: modelContext),
+            directionsService: LiveDirectionsService()
         )
     }
 }
@@ -23,6 +24,7 @@ struct ContentView: View {
 #Preview {
     MapScreenView(
         viewModel: MapViewModel(locationService: MockLocationService()),
-        searchService: MockDestinationSearchService()
+        searchService: MockDestinationSearchService(),
+        directionsService: MockDirectionsService()
     )
 }
