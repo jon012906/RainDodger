@@ -94,7 +94,6 @@ struct MapScreenView: View {
                     searchService: searchService,
                     searchCoordinate: viewModel.currentCoordinate
                 )
-                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
         }
@@ -158,7 +157,7 @@ struct MapScreenView: View {
                 RainUnavailableBanner()
             } else if !selected.rainSegments.isEmpty {
                 RainLegend(
-                    wetDistance: wetDistance(for: selected),
+                    wetDistance: RainMetrics.wetDistance(for: selected),
                     totalDistance: selected.distance
                 )
             }
@@ -245,20 +244,6 @@ struct MapScreenView: View {
     private func routeMidpoint(_ route: RouteAlternative) -> CLLocationCoordinate2D? {
         guard !route.coordinatePoints.isEmpty else { return nil }
         return route.coordinatePoints[route.coordinatePoints.count / 2]
-    }
-
-    private func wetDistance(for alternative: RouteAlternative) -> CLLocationDistance {
-        let segments = alternative.rainSegments
-        guard !segments.isEmpty else { return 0 }
-        var wet: CLLocationDistance = 0
-        for (index, segment) in segments.enumerated() {
-            let end = index + 1 < segments.count ? segments[index + 1].distanceFromStart : alternative.distance
-            let length = end - segment.distanceFromStart
-            if segment.rainChance >= 0.5 {
-                wet += length
-            }
-        }
-        return wet
     }
 
     private func refreshRainOverlays() {
@@ -391,7 +376,7 @@ private struct RainOverlay: Identifiable {
 private struct RainUnavailableBanner: View {
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "cloud.slash")
+            Image(systemName: "icloud.slash")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color.secondary)
                 .accessibilityHidden(true)
