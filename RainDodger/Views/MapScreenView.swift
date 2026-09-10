@@ -14,15 +14,24 @@ struct MapScreenView: View {
 
     @State private var searchViewModel: SearchViewModel
     @State private var tripPlanner: TripPlannerViewModel
+    @State private var rainOverlays: [RainOverlay] = []
     @State private var cameraPosition: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    init(viewModel: MapViewModel, searchService: DestinationSearchService, directionsService: DirectionsService) {
+    init(
+        viewModel: MapViewModel,
+        searchService: DestinationSearchService,
+        directionsService: DirectionsService,
+        weatherService: WeatherService
+    ) {
         self.viewModel = viewModel
         self.searchService = searchService
         _searchViewModel = State(initialValue: SearchViewModel(searchService: searchService))
-        _tripPlanner = State(initialValue: TripPlannerViewModel(directionsService: directionsService))
+        _tripPlanner = State(initialValue: TripPlannerViewModel(
+            directionsService: directionsService,
+            weatherService: weatherService
+        ))
     }
 
     var body: some View {
@@ -34,6 +43,11 @@ struct MapScreenView: View {
                 if viewModel.authorizationState == .denied {
                     LocationPermissionOverlay(onOpenSettings: openSettings)
                 }
+
+                weatherStatusOverlay
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.top, 12)
+                    .padding(.leading, 16)
             }
             .overlay(alignment: .bottomTrailing) {
                 VStack(spacing: 12) {
@@ -64,6 +78,11 @@ struct MapScreenView: View {
                 }
                 .padding(.horizontal, isLandscape ? 0 : 16)
                 .padding(.bottom, isLandscape ? 8 : 12)
+            }
+            .overlay {
+                if tripPlanner.isWeatherLoading {
+                    WeatherLoadingOverlay()
+                }
             }
             .sheet(isPresented: $viewModel.isSearchPresented) {
                 SearchPage(viewModel: searchViewModel, onSelect: selectDestination)
@@ -106,7 +125,11 @@ struct MapScreenView: View {
             viewModel.consumeCameraIntent()
         }
         .onChange(of: tripPlanner.routePlan?.selectedRouteID) { _, _ in
+            refreshRainOverlays()
             fitCameraToRoute()
+        }
+        .onChange(of: tripPlanner.weatherState) { _, _ in
+            refreshRainOverlays()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -126,6 +149,22 @@ struct MapScreenView: View {
         return false
     }
 
+    @ViewBuilder
+    private var weatherStatusOverlay: some View {
+        if let plan = tripPlanner.routePlan,
+           !isTripPlanFailed,
+           let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
+            if tripPlanner.weatherUnavailable {
+                RainUnavailableBanner()
+            } else if !selected.rainSegments.isEmpty {
+                RainLegend(
+                    wetDistance: wetDistance(for: selected),
+                    totalDistance: selected.distance
+                )
+            }
+        }
+    }
+
     private var map: some View {
         MapReader { proxy in
             Map(position: $cameraPosition) {
@@ -133,11 +172,18 @@ struct MapScreenView: View {
                 if let plan = tripPlanner.routePlan, !isTripPlanFailed {
                     ForEach(plan.alternatives) { alternative in
                         let isSelected = alternative.id == plan.selectedRouteID
-                        MapPolyline(alternative.polyline)
-                            .stroke(
-                                isSelected ? Color.blue : Color.blue.opacity(0.4),
-                                lineWidth: isSelected ? 6 : 2
-                            )
+                        if isSelected, !rainOverlays.isEmpty {
+                            ForEach(rainOverlays) { overlay in
+                                MapPolyline(overlay.polyline)
+                                    .stroke(overlay.color, lineWidth: 6)
+                            }
+                        } else {
+                            MapPolyline(alternative.polyline)
+                                .stroke(
+                                    isSelected ? Color.blue : Color.blue.opacity(0.4),
+                                    lineWidth: isSelected ? 6 : 2
+                                )
+                        }
                     }
                     if let origin = plan.origin, !isCurrentLocation(origin) {
                         Marker(origin.name, coordinate: origin.coordinate)
@@ -199,6 +245,68 @@ struct MapScreenView: View {
     private func routeMidpoint(_ route: RouteAlternative) -> CLLocationCoordinate2D? {
         guard !route.coordinatePoints.isEmpty else { return nil }
         return route.coordinatePoints[route.coordinatePoints.count / 2]
+    }
+
+    private func wetDistance(for alternative: RouteAlternative) -> CLLocationDistance {
+        let segments = alternative.rainSegments
+        guard !segments.isEmpty else { return 0 }
+        var wet: CLLocationDistance = 0
+        for (index, segment) in segments.enumerated() {
+            let end = index + 1 < segments.count ? segments[index + 1].distanceFromStart : alternative.distance
+            let length = end - segment.distanceFromStart
+            if segment.rainChance >= 0.5 {
+                wet += length
+            }
+        }
+        return wet
+    }
+
+    private func refreshRainOverlays() {
+        guard tripPlanner.weatherState == .loaded, let plan = tripPlanner.routePlan else {
+            rainOverlays = []
+            return
+        }
+        guard let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first,
+              !selected.rainSegments.isEmpty else {
+            rainOverlays = []
+            return
+        }
+        rainOverlays = buildRainOverlays(for: selected)
+    }
+
+    private func buildRainOverlays(for alternative: RouteAlternative) -> [RainOverlay] {
+        let segments = alternative.rainSegments
+        let points = alternative.coordinatePoints
+        guard !segments.isEmpty, points.count > 1 else { return [] }
+        let cumulative = cumulativeDistances(of: points)
+        let total = cumulative.last ?? 0
+        return segments.enumerated().compactMap { index, segment in
+            let startDistance = segment.distanceFromStart
+            let endDistance = index + 1 < segments.count ? segments[index + 1].distanceFromStart : total
+            let startIndex = cumulative.firstIndex { $0 >= startDistance } ?? 0
+            let endIndex = min(
+                points.count - 1,
+                max(cumulative.lastIndex { $0 <= endDistance } ?? 0, startIndex + 1)
+            )
+            guard endIndex >= startIndex else { return nil }
+            let slice = Array(points[startIndex...endIndex])
+            guard slice.count > 1 else { return nil }
+            let polyline = MKPolyline(coordinates: slice, count: slice.count)
+            return RainOverlay(polyline: polyline, color: RainBand(rainChance: segment.rainChance).color)
+        }
+    }
+
+    private func cumulativeDistances(of points: [CLLocationCoordinate2D]) -> [CLLocationDistance] {
+        var cumulative: [CLLocationDistance] = [0]
+        var running: CLLocationDistance = 0
+        var previous = points[0]
+        for point in points.dropFirst() {
+            running += CLLocation(latitude: previous.latitude, longitude: previous.longitude)
+                .distance(from: CLLocation(latitude: point.latitude, longitude: point.longitude))
+            cumulative.append(running)
+            previous = point
+        }
+        return cumulative
     }
 
     private func selectDestination(_ result: SearchResult) {
@@ -274,6 +382,33 @@ struct MapScreenView: View {
     }
 }
 
+private struct RainOverlay: Identifiable {
+    let id = UUID()
+    let polyline: MKPolyline
+    let color: Color
+}
+
+private struct RainUnavailableBanner: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "cloud.slash")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.secondary)
+                .accessibilityHidden(true)
+            Text("Live rain unavailable")
+                .font(.rdRowStreet)
+                .foregroundStyle(Color.primary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minHeight: 44)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color(.systemBackground)))
+        .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Live rain unavailable. Showing route without rain forecast.")
+    }
+}
+
 private struct LocationErrorCard: View {
     let message: String
     let onRetry: () -> Void
@@ -302,6 +437,7 @@ private struct LocationErrorCard: View {
     MapScreenView(
         viewModel: MapViewModel(locationService: MockLocationService()),
         searchService: MockDestinationSearchService(),
-        directionsService: MockDirectionsService()
+        directionsService: MockDirectionsService(),
+        weatherService: MockWeatherService()
     )
 }

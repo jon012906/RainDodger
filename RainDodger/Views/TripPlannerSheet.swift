@@ -249,7 +249,7 @@ struct TripPlannerSheet: View {
     }
 
     private var checkRouteButton: some View {
-        Button(action: viewModel.plan) {
+        Button(action: viewModel.checkRoute) {
             HStack(spacing: 8) {
                 Image(systemName: "scooter")
                     .font(.system(size: 17, weight: .semibold))
@@ -265,7 +265,7 @@ struct TripPlannerSheet: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Check Route")
-        .accessibilityHint("Double tap to re-run route planning")
+        .accessibilityHint("Double tap to check the route and its rain forecast")
     }
 
     @ViewBuilder
@@ -362,7 +362,10 @@ struct TripPlannerSheet: View {
 
 #Preview {
     TripPlannerSheet(
-        viewModel: TripPlannerViewModel(directionsService: MockDirectionsService()),
+        viewModel: TripPlannerViewModel(
+            directionsService: MockDirectionsService(),
+            weatherService: MockWeatherService()
+        ),
         searchService: MockDestinationSearchService(),
         searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010)
     )

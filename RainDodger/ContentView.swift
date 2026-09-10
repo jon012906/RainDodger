@@ -16,7 +16,8 @@ struct ContentView: View {
         MapScreenView(
             viewModel: viewModel,
             searchService: LiveDestinationSearchService(modelContext: modelContext),
-            directionsService: LiveDirectionsService()
+            directionsService: LiveDirectionsService(),
+            weatherService: LiveWeatherService()
         )
     }
 }
@@ -25,6 +26,7 @@ struct ContentView: View {
     MapScreenView(
         viewModel: MapViewModel(locationService: MockLocationService()),
         searchService: MockDestinationSearchService(),
-        directionsService: MockDirectionsService()
+        directionsService: MockDirectionsService(),
+        weatherService: MockWeatherService()
     )
 }
