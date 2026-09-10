@@ -43,3 +43,31 @@ RainDodger/opencode.sh
 
 # Local developer signing config (DEVELOPMENT_TEAM) — machine-local, never committed
 RainDodger/Config/Local.xcconfig
+
+# Impeccable design skill (.opencode/skills/impeccable) — engine binary is platform-specific
+# and re-downloaded on first run; never commit it
+.opencode/skills/impeccable/scripts/bin/
+
+# impeccable-ignore-start
+# Ephemeral output, runtime state, and per-dev overrides.
+# Unanchored: .impeccable may sit at the repo root or under a nested workspace.
+# Shared artifacts stay tracked: config.json, live/config.json, design.json,
+# surfaces/*.md, critique/*.md.
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/*.png
+.impeccable/review/
+.impeccable/questions/
+.impeccable/live/server.json
+.impeccable/live/sessions/
+.impeccable/live/previews/
+.impeccable/live/annotations/
+.impeccable/live/cache/
+.impeccable/live/manual-edit-apply-transaction.json
+.impeccable/live/manual-edit-events.jsonl
+.impeccable/live/manual-edit-evidence/
+.impeccable/live/pending-manual-edits.json
+.impeccable/live/deferred-svelte-component-accepts.json
+.impeccable/live/*.png
+# impeccable-ignore-end
