@@ -29,6 +29,10 @@ struct RouteCard: View {
                             .font(.system(size: 20))
                             .foregroundStyle(Color.blue)
                             .accessibilityHidden(true)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.secondary)
+                            .accessibilityHidden(true)
                     }
                 }
                 Text(distanceText)
@@ -50,7 +54,7 @@ struct RouteCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint("Double tap to select this route")
+        .accessibilityHint(isSelected ? "Double tap to open route details" : "Double tap to select this route")
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
     }
 

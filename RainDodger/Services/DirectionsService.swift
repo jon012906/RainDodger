@@ -83,19 +83,61 @@ final class LiveDirectionsService: DirectionsService {
             distance: route.distance,
             travelTime: route.expectedTravelTime,
             polyline: route.polyline,
-            coordinatePoints: points
+            coordinatePoints: points,
+            steps: steps(from: route.steps, totalDistance: route.distance)
         )
     }
 
     private func stitch(_ firstLeg: MKRoute, _ secondLeg: MKRoute) -> RouteAlternative {
         let points = coordinates(from: firstLeg.polyline) + coordinates(from: secondLeg.polyline)
         let polyline = MKPolyline(coordinates: points, count: points.count)
+        let firstSteps = steps(from: firstLeg.steps, totalDistance: firstLeg.distance)
+        let secondSteps = steps(
+            from: secondLeg.steps,
+            totalDistance: secondLeg.distance,
+            indexOffset: firstSteps.count,
+            distanceOffset: firstLeg.distance
+        )
         return RouteAlternative(
             distance: firstLeg.distance + secondLeg.distance,
             travelTime: firstLeg.expectedTravelTime + secondLeg.expectedTravelTime,
             polyline: polyline,
-            coordinatePoints: points
+            coordinatePoints: points,
+            steps: firstSteps + secondSteps
         )
+    }
+
+    private func steps(
+        from routeSteps: [MKRoute.Step],
+        totalDistance: CLLocationDistance,
+        indexOffset: Int = 0,
+        distanceOffset: CLLocationDistance = 0
+    ) -> [RouteStep] {
+        let rawTotal = routeSteps.map(\.distance).reduce(0, +)
+        let scale = totalDistance / max(rawTotal, 1)
+        var cumulative = distanceOffset
+        return routeSteps.enumerated().map { offset, routeStep in
+            let index = indexOffset + offset
+            let step = RouteStep(
+                index: index,
+                instruction: routeStep.instructions,
+                distance: routeStep.distance,
+                turnType: parsedTurnType(for: routeStep.instructions, index: index),
+                polyline: routeStep.polyline,
+                coordinatePoints: coordinates(from: routeStep.polyline),
+                distanceFromStart: cumulative
+            )
+            cumulative += routeStep.distance * scale
+            return step
+        }
+    }
+
+    private func parsedTurnType(for instruction: String, index: Int) -> RouteTurnType {
+        let parsed = RouteTurnType(instruction: instruction)
+        if parsed == .other, index == 0 {
+            return .straight
+        }
+        return parsed
     }
 
     private func coordinates(from polyline: MKPolyline) -> [CLLocationCoordinate2D] {
@@ -140,11 +182,19 @@ final class MockDirectionsService: DirectionsService {
         let secondRoute = secondLeg[0]
         let points = firstRoute.coordinatePoints + secondRoute.coordinatePoints
         let polyline = MKPolyline(coordinates: points, count: points.count)
+        let steps = firstRoute.steps + scriptedSteps(
+            from: stop,
+            to: destination,
+            distance: secondRoute.distance,
+            indexOffset: firstRoute.steps.count,
+            distanceOffset: firstRoute.distance
+        )
         return RouteAlternative(
             distance: firstRoute.distance + secondRoute.distance,
             travelTime: firstRoute.travelTime + secondRoute.travelTime,
             polyline: polyline,
-            coordinatePoints: points
+            coordinatePoints: points,
+            steps: steps
         )
     }
 
@@ -169,9 +219,64 @@ final class MockDirectionsService: DirectionsService {
                 distance: distance,
                 travelTime: travelTime,
                 polyline: polyline,
-                coordinatePoints: points
+                coordinatePoints: points,
+                steps: scriptedSteps(from: start, to: end, distance: distance)
             )
         }
+    }
+
+    private func scriptedSteps(
+        from start: CLLocationCoordinate2D,
+        to end: CLLocationCoordinate2D,
+        distance: CLLocationDistance,
+        indexOffset: Int = 0,
+        distanceOffset: CLLocationDistance = 0
+    ) -> [RouteStep] {
+        let script: [(instruction: String, turnType: RouteTurnType, weight: Double)] = [
+            ("Depart and head east on Main Street", .depart, 0.35),
+            ("Continue straight for 5 kilometers", .straight, 0.15),
+            ("At the roundabout, take the second exit", .roundabout, 0.08),
+            ("Slight right onto the ramp", .slightRight, 0.07),
+            ("Merge onto Highway 1", .merge, 0.20),
+            ("Keep left to stay on Highway 1", .keepLeft, 0.07),
+            ("Make a U-turn at the next intersection", .uTurn, 0.04),
+            ("Your destination is on the right", .arrive, 0.04)
+        ]
+        let totalWeight = script.reduce(0) { $0 + $1.weight }
+        var cumulative = distanceOffset
+        var fraction: Double = 0
+        return script.enumerated().map { index, entry in
+            let nextFraction = fraction + entry.weight / totalWeight
+            let stepPoints = interpolate(
+                from: point(from: start, to: end, fraction: fraction),
+                to: point(from: start, to: end, fraction: nextFraction),
+                count: 3
+            )
+            let stepDistance = distance * entry.weight / totalWeight
+            let step = RouteStep(
+                index: indexOffset + index,
+                instruction: entry.instruction,
+                distance: stepDistance,
+                turnType: entry.turnType,
+                polyline: MKPolyline(coordinates: stepPoints, count: stepPoints.count),
+                coordinatePoints: stepPoints,
+                distanceFromStart: cumulative
+            )
+            cumulative += stepDistance
+            fraction = nextFraction
+            return step
+        }
+    }
+
+    private func point(
+        from start: CLLocationCoordinate2D,
+        to end: CLLocationCoordinate2D,
+        fraction: Double
+    ) -> CLLocationCoordinate2D {
+        CLLocationCoordinate2D(
+            latitude: start.latitude + (end.latitude - start.latitude) * fraction,
+            longitude: start.longitude + (end.longitude - start.longitude) * fraction
+        )
     }
 
     private func interpolate(

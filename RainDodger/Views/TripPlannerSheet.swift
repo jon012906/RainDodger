@@ -17,6 +17,8 @@ struct TripPlannerSheet: View {
     @State private var searchViewModel: SearchViewModel
     @State private var activeSearch: SearchTarget?
     @State private var isDeparturePickerPresented = false
+    @State private var detent: PresentationDetent = .medium
+    @State private var showsDetail = false
 
     init(
         viewModel: TripPlannerViewModel,
@@ -51,6 +53,28 @@ struct TripPlannerSheet: View {
     }()
 
     var body: some View {
+        Group {
+            if showsDetail {
+                RouteDetailSheet(viewModel: viewModel) {
+                    showsDetail = false
+                    detent = .medium
+                }
+            } else {
+                plannerContent
+            }
+        }
+        .presentationDetents([.medium, .large], selection: $detent)
+        .sheet(item: $activeSearch) { target in
+            SearchPage(
+                viewModel: searchViewModel,
+                onSelect: { result in handlePick(result, for: target) },
+                context: target.context
+            )
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    private var plannerContent: some View {
         VStack(spacing: 12) {
             Text("Direction")
                 .font(.title3.weight(.bold))
@@ -68,14 +92,6 @@ struct TripPlannerSheet: View {
         .padding(.top, 12)
         .padding(.bottom, 16)
         .background(colorScheme == .dark ? Color(.systemBackground) : Color.searchBackground)
-        .sheet(item: $activeSearch) { target in
-            SearchPage(
-                viewModel: searchViewModel,
-                onSelect: { result in handlePick(result, for: target) },
-                context: target.context
-            )
-            .presentationDragIndicator(.visible)
-        }
     }
 
     private var groupedCard: some View {
@@ -301,7 +317,14 @@ struct TripPlannerSheet: View {
                             index: index,
                             alternative: alternative,
                             isSelected: alternative.id == plan.selectedRouteID,
-                            onTap: { viewModel.selectRoute(alternative.id) }
+                            onTap: {
+                                if alternative.id == plan.selectedRouteID {
+                                    detent = .large
+                                    showsDetail = true
+                                } else {
+                                    viewModel.selectRoute(alternative.id)
+                                }
+                            }
                         )
                     }
                 }
@@ -369,6 +392,5 @@ struct TripPlannerSheet: View {
         searchService: MockDestinationSearchService(),
         searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010)
     )
-    .presentationDetents([.medium, .large])
     .presentationDragIndicator(.visible)
 }

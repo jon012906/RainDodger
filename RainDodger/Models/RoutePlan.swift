@@ -64,6 +64,7 @@ struct RouteAlternative: Identifiable {
     let polyline: MKPolyline
     let coordinatePoints: [CLLocationCoordinate2D]
     let rainSegments: [RainSegment]
+    let steps: [RouteStep]
 
     init(
         id: UUID = UUID(),
@@ -71,7 +72,8 @@ struct RouteAlternative: Identifiable {
         travelTime: TimeInterval,
         polyline: MKPolyline,
         coordinatePoints: [CLLocationCoordinate2D],
-        rainSegments: [RainSegment] = []
+        rainSegments: [RainSegment] = [],
+        steps: [RouteStep] = []
     ) {
         self.id = id
         self.distance = distance
@@ -79,6 +81,59 @@ struct RouteAlternative: Identifiable {
         self.polyline = polyline
         self.coordinatePoints = coordinatePoints
         self.rainSegments = rainSegments
+        self.steps = steps
+    }
+}
+
+enum RainMetrics {
+    static let wetThreshold: Double = 0.5
+
+    static func wetDistance(for alternative: RouteAlternative) -> CLLocationDistance {
+        let segments = alternative.rainSegments
+        guard !segments.isEmpty else { return 0 }
+        var wet: CLLocationDistance = 0
+        for (index, segment) in segments.enumerated() {
+            let end = index + 1 < segments.count ? segments[index + 1].distanceFromStart : alternative.distance
+            let length = end - segment.distanceFromStart
+            if segment.rainChance >= wetThreshold {
+                wet += length
+            }
+        }
+        return wet
+    }
+
+    static func mappedSteps(
+        _ steps: [RouteStep],
+        rainSegments: [RainSegment],
+        totalDistance: CLLocationDistance
+    ) -> [RouteStep] {
+        guard !rainSegments.isEmpty else {
+            return steps.map { step in
+                var mapped = step
+                mapped.rainChance = nil
+                mapped.wet = false
+                return mapped
+            }
+        }
+        return steps.enumerated().map { offset, step in
+            let end = offset + 1 < steps.count ? steps[offset + 1].distanceFromStart : max(totalDistance, step.distanceFromStart)
+            let inRange = rainSegments.filter {
+                $0.distanceFromStart >= step.distanceFromStart && $0.distanceFromStart < end
+            }
+            let midpoint = (step.distanceFromStart + end) / 2
+            let representative = inRange.map(\.rainChance).max()
+                ?? nearestRainChance(to: midpoint, in: rainSegments)
+            var mapped = step
+            mapped.rainChance = representative
+            mapped.wet = (representative ?? 0) >= wetThreshold
+            return mapped
+        }
+    }
+
+    private static func nearestRainChance(to distance: CLLocationDistance, in segments: [RainSegment]) -> Double? {
+        segments.min {
+            abs($0.distanceFromStart - distance) < abs($1.distanceFromStart - distance)
+        }?.rainChance
     }
 }
 
