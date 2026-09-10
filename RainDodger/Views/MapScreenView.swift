@@ -37,14 +37,15 @@ struct MapScreenView: View {
     var body: some View {
         GeometryReader { proxy in
             let isLandscape = proxy.size.width > proxy.size.height
+            let stretches = Self.wetStretches(for: tripPlanner, isFailed: isTripPlanFailed)
             ZStack {
-                map
+                map(stretches: stretches)
 
                 if viewModel.authorizationState == .denied {
                     LocationPermissionOverlay(onOpenSettings: openSettings)
                 }
 
-                weatherStatusOverlay
+                weatherStatusOverlay(stretches: stretches)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding(.top, 12)
                     .padding(.leading, 16)
@@ -154,8 +155,15 @@ struct MapScreenView: View {
         return false
     }
 
+    private static func wetStretches(for tripPlanner: TripPlannerViewModel, isFailed: Bool) -> [WetStretch] {
+        guard !isFailed, let plan = tripPlanner.routePlan,
+              let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first
+        else { return [] }
+        return RainMetrics.wetStretches(for: selected)
+    }
+
     @ViewBuilder
-    private var weatherStatusOverlay: some View {
+    private func weatherStatusOverlay(stretches: [WetStretch]) -> some View {
         if let plan = tripPlanner.routePlan,
            !isTripPlanFailed,
            let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
@@ -164,13 +172,14 @@ struct MapScreenView: View {
             } else if !selected.rainSegments.isEmpty {
                 RainLegend(
                     wetDistance: RainMetrics.wetDistance(for: selected),
-                    totalDistance: selected.distance
+                    totalDistance: selected.distance,
+                    wetStretches: stretches
                 )
             }
         }
     }
 
-    private var map: some View {
+    private func map(stretches: [WetStretch]) -> some View {
         MapReader { proxy in
             Map(position: $cameraPosition) {
                 UserAnnotation()
@@ -204,13 +213,13 @@ struct MapScreenView: View {
             .mapStyle(.standard)
             .ignoresSafeArea()
             .overlay {
-                mapBadges(proxy: proxy)
+                mapBadges(proxy: proxy, stretches: stretches)
             }
         }
     }
 
     @ViewBuilder
-    private func mapBadges(proxy: MapProxy) -> some View {
+    private func mapBadges(proxy: MapProxy, stretches: [WetStretch]) -> some View {
         if let plan = tripPlanner.routePlan, !isTripPlanFailed,
            let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
             if let destinationPoint = proxy.convert(plan.destination.coordinate, to: .local) {
@@ -221,6 +230,12 @@ struct MapScreenView: View {
                let badgePoint = proxy.convert(midpoint, to: .local) {
                 fastestBadge(selected)
                     .position(x: badgePoint.x, y: badgePoint.y - 26)
+            }
+            ForEach(Array(stretches.prefix(RainMetrics.maxWetStretchBadges))) { stretch in
+                if let point = proxy.convert(stretch.startCoordinate, to: .local) {
+                    RainTimeBadge(arrivalDate: stretch.arrivalDate)
+                        .position(x: point.x, y: point.y + 20)
+                }
             }
         }
     }
@@ -377,6 +392,26 @@ private struct RainOverlay: Identifiable {
     let id = UUID()
     let polyline: MKPolyline
     let color: Color
+}
+
+private struct RainTimeBadge: View {
+    let arrivalDate: Date
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "cloud.rain.fill")
+                .font(.headline)
+            Text(arrivalDate.formatted(Date.FormatStyle(date: .omitted, time: .shortened)))
+                .font(.headline)
+                .lineLimit(1)
+        }
+        .foregroundStyle(Color.primary)
+        .padding(.horizontal, 12)
+        .frame(minHeight: 36)
+        .background(Capsule().fill(Color(.systemBackground)))
+        .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+        .accessibilityHidden(true)
+    }
 }
 
 private struct RainUnavailableBanner: View {

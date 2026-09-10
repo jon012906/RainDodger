@@ -40,6 +40,7 @@ struct RainSegment: Identifiable {
     let index: Int
     let coordinate: CLLocationCoordinate2D
     let distanceFromStart: CLLocationDistance
+    let arrivalDate: Date
     let rainChance: Double
 
     init(
@@ -47,13 +48,37 @@ struct RainSegment: Identifiable {
         index: Int,
         coordinate: CLLocationCoordinate2D,
         distanceFromStart: CLLocationDistance,
+        arrivalDate: Date,
         rainChance: Double
     ) {
         self.id = id
         self.index = index
         self.coordinate = coordinate
         self.distanceFromStart = distanceFromStart
+        self.arrivalDate = arrivalDate
         self.rainChance = rainChance
+    }
+}
+
+struct WetStretch: Identifiable {
+    let id: Int
+    let startCoordinate: CLLocationCoordinate2D
+    let arrivalDate: Date
+    let rainChance: Double
+    let distanceFromStart: CLLocationDistance
+
+    init(
+        startIndex: Int,
+        startCoordinate: CLLocationCoordinate2D,
+        arrivalDate: Date,
+        rainChance: Double,
+        distanceFromStart: CLLocationDistance
+    ) {
+        self.id = startIndex
+        self.startCoordinate = startCoordinate
+        self.arrivalDate = arrivalDate
+        self.rainChance = rainChance
+        self.distanceFromStart = distanceFromStart
     }
 }
 
@@ -87,6 +112,7 @@ struct RouteAlternative: Identifiable {
 
 enum RainMetrics {
     static let wetThreshold: Double = 0.5
+    static let maxWetStretchBadges = 3
 
     static func wetDistance(for alternative: RouteAlternative) -> CLLocationDistance {
         let segments = alternative.rainSegments
@@ -100,6 +126,42 @@ enum RainMetrics {
             }
         }
         return wet
+    }
+
+    static func wetStretches(for alternative: RouteAlternative) -> [WetStretch] {
+        var stretches: [WetStretch] = []
+        var runStart: RainSegment?
+        var runMaxChance: Double = 0
+        for segment in alternative.rainSegments {
+            if segment.rainChance >= wetThreshold {
+                if runStart == nil {
+                    runStart = segment
+                    runMaxChance = segment.rainChance
+                } else {
+                    runMaxChance = max(runMaxChance, segment.rainChance)
+                }
+            } else if let start = runStart {
+                stretches.append(WetStretch(
+                    startIndex: start.index,
+                    startCoordinate: start.coordinate,
+                    arrivalDate: start.arrivalDate,
+                    rainChance: runMaxChance,
+                    distanceFromStart: start.distanceFromStart
+                ))
+                runStart = nil
+                runMaxChance = 0
+            }
+        }
+        if let start = runStart {
+            stretches.append(WetStretch(
+                startIndex: start.index,
+                startCoordinate: start.coordinate,
+                arrivalDate: start.arrivalDate,
+                rainChance: runMaxChance,
+                distanceFromStart: start.distanceFromStart
+            ))
+        }
+        return stretches
     }
 
     static func mappedSteps(

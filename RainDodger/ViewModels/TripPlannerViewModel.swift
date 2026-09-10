@@ -257,6 +257,7 @@ final class TripPlannerViewModel {
                                 index: sample.index,
                                 coordinate: sample.coordinate,
                                 distanceFromStart: sample.distanceFromStart,
+                                arrivalDate: arrival,
                                 rainChance: chance
                             )
                         )
