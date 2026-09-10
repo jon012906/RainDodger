@@ -8,8 +8,8 @@ The feature is a single main screen with these states:
 
 - **Loading:** map renders immediately (system tiles); no blue dot or controls until the first heading/location arrives.
 - **Permission requested (system):** native iOS when-in-use prompt appears over the map; app shows the map beneath it.
-- **Denied:** in-app overlay on the map — explanatory text ("Rain Dodger needs your location to recenter and show the compass") + Open Settings button.
-- **Loaded:** full-screen map, blue user dot, bottom search capsule, top-trailing control stack (compass + recenter).
+- **Denied:** in-app overlay on the map — explanatory text ("Rain Dodger needs your location to recenter the map") + Open Settings button.
+- **Loaded:** full-screen map, blue user dot, bottom search capsule, bottom-trailing recenter button drawn above the bottom bar (compass out of scope this branch).
 - **Search entry:** tapping the search capsule opens the destination search page (see `docs/designs/search.md`).
 
 Offline/error of map tiles is handled by MapKit's standard behavior — no custom error state this branch.
@@ -18,23 +18,23 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 
 - **Map:** full-screen edge-to-edge, standard gestures (pan/zoom/pinch), standard MapKit style. `Map` (iOS 26 SwiftUI).
 - **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → opens the search page.
-- **Control stack:** floating top-trailing, below the status bar, above the map: dark circular compass (white cardinal letters, top marker) above white circular recenter (dark location arrow). Each 44 pt+; stack stays clear of the bottom capsule.
-- **Compass:** always visible; dial rotates with device heading so the cardinal letter for the current heading sits at the top marker (N → E → S → W); tap → north-up + recenter.
+- **Control stack:** the recenter button floats bottom-trailing, above the map and drawn ON TOP of / above the bottom bar (the search field when no route is planned, or the route-summary pill when the trip sheet is dismissed) — never behind or underneath it. It sits ~80 pt above the bottom safe-area inset in portrait, and ~76 pt above the inset in landscape (where the bar is full-width), so it clears the bar in both orientations. White circle with a dark location arrow; 44 pt+.
+- **Compass:** **out of scope this branch** — `CompassControl` stays commented out in `MapScreenView` and is not rendered. When re-enabled: always visible; dial rotates with device heading so the cardinal letter for the current heading sits at the top marker (N → E → S → W); tap → north-up + recenter.
 - **Blue dot:** centered on the user's location via `UserAnnotation` (no cone this branch).
 - **Denied overlay:** full-map coverage with dark translucent scrim + solid card: heading, explanation, Open Settings button.
 
 **Landscape (mounted):** the phone sits in landscape on the bike mount — both orientations must work (004 §4.7):
 
 - **Search capsule:** expands to full width across the bottom edge (inside the horizontal safe-area insets) instead of floating bottom-center; content keeps the same order (magnifier · placeholder · mic · avatar).
-- **Control stack:** stays top-trailing but always inside the safe area — clear of the Dynamic Island/notch (which sits at the left or right edge in landscape) and of the left/right screen edges; each button stays 44 pt+.
-- **No element cut off:** capsule, control stack, and compass remain fully on-screen within the safe areas in landscape; the map fills the remaining space.
+- **Control stack:** the recenter button stays bottom-trailing inside the safe area — clear of the Dynamic Island/notch (which sits at the left or right edge in landscape) and of the left/right screen edges, and lifted ~76 pt above the bottom inset so it clears the full-width bottom bar; stays 44 pt+.
+- **No element cut off:** the search capsule and the recenter control stack remain fully on-screen within the safe areas in landscape; the map fills the remaining space.
 
 ## 3. Components
 
 - **MapScreenView** — composes the `Map`, overlays controls, owns the `MapViewModel`.
 - **DestinationSearchField** — the bottom capsule (magnifier, "Your Destination…", mic, avatar); tap → opens `SearchPage` (see `docs/designs/search.md`).
-- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; always visible; tap → north-up + recenter.
-- **RecenterButton** — white circle, dark location arrow; pans camera to user location.
+- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; **out of scope this branch** (commented out in `MapScreenView`, not rendered); when re-enabled: always visible; tap → north-up + recenter.
+- **RecenterButton** — white circle, dark location arrow; pans camera to user location. Positioned bottom-trailing and drawn above the bottom bar (search field or route-summary pill), lifted ~80 pt above the bottom safe-area inset in portrait (~76 pt in landscape where the bar is full-width).
 - **LocationPermissionOverlay** — denied state: explanation + Open Settings (44 pt).
 - **SearchPage** — destination search page as a modal sheet; components in `docs/designs/search.md`.
 - **MockLocationService** — for previews: scripted headings 0° → 45° → 90° → 180°, static coordinate, configurable permission state.

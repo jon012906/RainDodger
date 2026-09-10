@@ -4,15 +4,15 @@ Reference screenshot (Apple Maps rain overlay, iOS): the route is drawn over the
 
 ## 1. Screens
 
-- **Loading (weather computing):** after routing succeeds, a dim scrim (45% black) covers the map with a centered card: `ProgressView` + "Checking rain along your route…" on a solid `Color(.systemBackground)` backing. Non-dismissable; map gestures blocked; the trip sheet (if open) stays usable so the rider can still switch routes. Light + dark: same layout; the card auto-adapts.
+- **Loading (weather computing):** Check Route dismisses the trip sheet first, then a dim scrim (45% black) covers the map with a centered card: `ProgressView` + "Checking rain along your route…" on a solid `Color(.systemBackground)` backing. Non-dismissable; map gestures blocked; the overlay covers the map and the route-summary pill. Light + dark: same layout; the card auto-adapts.
 - **Loaded (forecast):** the selected route redraws as per-segment strokes — route-blue (<30%), yellow (30–60%), red (≥60%) — REPLACING the plain route-blue selected stroke; unselected alternatives stay muted blue as today. A `RainLegend` card floats top-leading over the map: chips "Dry <30%", "Light 30–60%", "Heavy rain ≥60%" plus the wet-distance line "14 km of 40 km with rain ≥ 50%". Route cards, map badges, pill, camera fit unchanged.
 - **Offline / WeatherKit unavailable:** the legend is replaced by a non-blocking banner "Live rain unavailable" (cloud-slash icon + text on a solid backing); the route draws in plain route-blue as today — fully shown, plan not failed.
-- **Re-selected route:** selecting another route card hides the legend, re-shows the loading overlay while that route's forecast computes, then the legend + colored segments update for the new selection.
+- **Re-selected route:** selecting another route card NEVER auto-fetches — a route with cached segments reuses them instantly (legend + colored segments stay); a route without segments shows no forecast (plain route-blue, legend hidden) until the rider taps Check Route.
 - **Re-plan / Retry:** tapping Check Route again cancels the weather task, re-runs routing, and repeats loading → loaded (or the offline banner).
 
 ## 2. Layout
 
-- **Loading overlay:** full-map dim scrim (`.ignoresSafeArea()`) with a centered card (max width ~280 pt): spinner (`ProgressView`, `.controlSize(.large)`) above the label; solid `Color(.systemBackground)` backing, 16 pt corner radius, subtle shadow; ≥ 44 pt effective height.
+- **Loading overlay:** full-map dim scrim (`.ignoresSafeArea()`) covering the map and the route-summary pill, with a centered card (max width ~280 pt): spinner (`ProgressView`, `.controlSize(.large)`) above the label; solid `Color(.systemBackground)` backing, 16 pt corner radius, subtle shadow; ≥ 44 pt effective height.
 - **Legend card:** top-leading overlay over the map (12 pt from the top, 16 pt from the leading edge). Content column: a chip row (dot swatch + band label + % range) and the wet-distance line underneath. Solid `Color(.systemBackground)` backing, 14 pt corner radius, shadow; `minHeight` 44. `ViewThatFits(in: .horizontal)`: the chips row horizontal, with a vertical stacked fallback for huge Dynamic Type sizes.
 - **Offline banner:** same top-leading position as the legend; icon + "Live rain unavailable" in a solid card, `minHeight` 44.
 - **Map:** selected route = per-segment colored strokes (lineWidth 6) when segments exist, else plain route-blue 6 pt; unselected = route-blue at 40% opacity, 2 pt. Camera fit, badges, pill unchanged.

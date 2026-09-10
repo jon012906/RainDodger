@@ -16,11 +16,11 @@ After the rider taps "Check Route", Rain Dodger computes a rainfall forecast alo
 |---|---|---|---|
 | R1 | WeatherKit entitlement `com.apple.developer.weatherkit` present; protocol-first `WeatherService` (Live + Mock) | P0 | Mock = deterministic scripted probabilities for previews/tests |
 | R2 | Selected route's polyline sampled every 5,000 m (cap ~60 samples); each sample's arrival time = `departureDate ?? now` + proportional fraction of travel time; `rainChance` fetched per sample in a bounded TaskGroup (chunked ≤ 8 concurrent) | P0 | Arrival-time forecast per point |
-| R3 | Blocking full-map loading overlay "Checking rain along your route…" while weather computes | P0 | Non-dismissable; present over the map only |
+| R3 | Blocking full-map loading overlay "Checking rain along your route…" while weather computes | P0 | Non-dismissable; present over the map and the route-summary pill only; Check Route dismisses the trip sheet before the overlay appears |
 | R4 | Selected route drawn as per-segment colored strokes REPLACING the route-blue stroke: <30% route-blue, 30–60% yellow, ≥60% red; unselected alternatives stay muted blue as today | P0 | Band mapping shared with the legend |
 | R5 | `RainLegend` over the map: "Dry / Light / Heavy rain" chips with % ranges + wet-distance line ("14 km of 40 km with rain ≥ 50%") | P0 | Text not color-only |
 | R6 | Weather failure/offline degrades to a non-blocking "live rain unavailable" banner in place of the legend; route fully shown, no crash, plan NOT failed | P0 | |
-| R7 | Weather computed for the selected route only; re-selecting another route re-samples/re-fetches (prior in-flight fetch cancelled); re-selecting a route that already has segments reuses them | P0 | No weather on unselected alternatives |
+| R7 | Weather computed for the selected route only; re-selecting a route NEVER auto-fetches — a route with cached segments reuses them (weatherState `.loaded`), one without segments shows no forecast (`.idle`) until the rider taps Check Route | P0 | No weather on unselected alternatives; no auto re-fetch on re-selection |
 | R8 | MVVM: `@MainActor @Observable` `TripPlannerViewModel` injects `WeatherService`; no comments; accessibility per `.opencode/rules/004-accessibility.md`; mocks in all previews | P0 | |
 | R9 | Docs: spec/design/flow per templates; `docs/template/spec-guide.md` §9 + `docs/implementation.md` updated | P0 | |
 
@@ -60,9 +60,9 @@ erDiagram
 - **Bands:** < 0.30 = Dry (route-blue), 0.30–0.60 = Light (yellow), ≥ 0.60 = Heavy rain (red).
 - **Wet distance:** sum of segment lengths whose `rainChance ≥ 0.5`; segment length = next sample's `distanceFromStart − this sample's`, and the last segment extends to the route's total distance.
 - **Weather failure:** catch the error, keep the route and plan, set `weatherState = .unavailable` → banner. Never fail the plan.
-- **Re-selection:** selecting a route without segments cancels the prior weather task and fetches; selecting one with segments reuses them.
+- **Re-selection:** selecting another route card NEVER fetches — a route with cached segments reuses them (weatherState `.loaded`, instant); a route without segments shows no forecast (weatherState `.idle`) until the rider taps Check Route. An in-flight fetch from a prior Check Route continues and its results attach only to the route it was requested for — never to a newly selected route.
 - **Re-plan:** an automatic re-route (destination/origin/stop/departure change) cancels the in-flight weather task, resets the weather state to idle, and re-runs routing only — no forecast until the rider taps Check Route again.
-- **Trigger:** weather is fetched only by `checkRoute()` (the Check Route tap) or by `selectRoute(_:)` for a route without cached segments.
+- **Trigger:** weather is fetched ONLY by `checkRoute()` (the Check Route tap); re-selecting a route never fetches.
 
 ## 6. Constraints
 
@@ -78,10 +78,10 @@ erDiagram
 - [ ] `com.apple.developer.weatherkit` present in `RainDodger/RainDodger.entitlements`; build passes via `.opencode/scripts/xcode-tools.sh build`
 - [ ] `WeatherService` protocol + `LiveWeatherService` (WeatherKit) + `MockWeatherService` (deterministic scripted probabilities); no comments
 - [ ] Check Route → routing succeeds → blocking "Checking rain along your route…" overlay → selected route sampled every 5 km (cap 60) → per-segment colors + legend + wet distance on the selected route only
-- [ ] Picking a destination / changing origin/stop/departure auto-plans routing with NO weather and no overlay; only tapping Check Route starts the forecast.
+- [ ] Picking a destination / changing origin/stop/departure auto-plans routing with NO weather and no overlay; Check Route dismisses the trip sheet first and the blocking overlay covers the map and the pill; only tapping Check Route starts the forecast.
 - [ ] Legend chips "Dry / Light / Heavy rain" + % ranges + "X km of Y km with rain ≥ 50%"; not color-only
 - [ ] WeatherKit failure/offline → non-blocking "live rain unavailable" banner in place of the legend; route fully shown; plan not failed
-- [ ] Re-selecting a route re-samples/re-fetches (prior fetch cancelled); re-selecting a route with segments reuses them
+- [ ] Re-selecting a route NEVER fetches: cached segments reused instantly (`.loaded`); a route without segments shows none (`.idle`) until Check Route is tapped
 - [ ] A11y per `.opencode/rules/004-accessibility.md`: VO labels, non-color-only, ≥44 pt, Dynamic Type, Reduce Motion
 - [ ] `TripPlannerViewModel` injects `weatherService`; `ContentView` injects `LiveWeatherService`; all `#Preview`s use `MockWeatherService`
 - [ ] Docs: `docs/specs/weather-forecast.md`, `docs/designs/weather-forecast.md`, `docs/flows/weather-forecast.md` per templates; `docs/template/spec-guide.md` §9 + `docs/implementation.md` updated

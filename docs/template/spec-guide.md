@@ -140,7 +140,7 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `feat/route-detail` |
+| Branch | `fix/ui-enhancements` |
 | Feature folders (files this branch owns/adds) | `docs/specs/route-detail.md` · `docs/designs/route-detail.md` · `docs/flows/route-detail.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
 | Models | `RainDodger/Models/RouteStep.swift` (new — `RouteStep` + `RouteTurnType` + English instruction parser) · `RainDodger/Models/RoutePlan.swift` (modified — `RouteAlternative.steps` + shared `RainMetrics.wetDistance`) |
 | Services | `RainDodger/Services/DirectionsService.swift` (modified — Live/Mock build `steps` from `MKRoute.steps`, distance-aligned; both legs stitched for stops) |
