@@ -140,14 +140,13 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `feat/search-feature` |
-| Feature folders (files this branch owns/adds) | `docs/specs/search.md` · `docs/designs/search.md` · `docs/flows/search.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
-| Models | `RainDodger/Models/SearchResult.swift` · `RainDodger/Models/RecentDestination.swift` |
-| Services | `RainDodger/Services/DestinationSearchService.swift` |
-| ViewModels | `RainDodger/ViewModels/SearchViewModel.swift` |
-| Views | `RainDodger/Views/SearchPage.swift` · `RainDodger/Views/SearchResultRow.swift` |
-| Extensions | `RainDodger/Extensions/ColorPalette.swift` · `RainDodger/Extensions/Typography.swift` |
-| Entry point files | `RainDodger/ContentView.swift` · `RainDodger/RainDodgerApp.swift` · `RainDodger/Info.plist` |
+| Branch | `feat/destination` |
+| Feature folders (files this branch owns/adds) | `docs/specs/trip-planner.md` · `docs/designs/trip-planner.md` · `docs/flows/trip-planner.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Models | `RainDodger/Models/RoutePlan.swift` |
+| Services | `RainDodger/Services/DirectionsService.swift` |
+| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` |
+| Views | `RainDodger/Views/TripPlannerSheet.swift` · `RainDodger/Views/RouteCard.swift` · `RainDodger/Views/RouteSummaryPill.swift` · `RainDodger/Views/MapScreenView.swift` (modified) · `RainDodger/Views/SearchPage.swift` (modified — "where from?" / add-stop modes) |
+| Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 
 How to keep it accurate:

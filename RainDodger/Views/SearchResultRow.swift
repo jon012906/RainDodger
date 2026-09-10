@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SearchResultRow: View {
     let result: SearchResult
+    var hint: String = "Double tap to select as destination"
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -42,7 +43,7 @@ struct SearchResultRow: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(result.name), \(result.street)")
-        .accessibilityHint("Double tap to select as destination")
+        .accessibilityHint(hint)
     }
 }
 

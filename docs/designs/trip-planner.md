@@ -1,0 +1,95 @@
+# Design — Trip Planner
+
+Reference screenshot (Google Maps–style "Direction" sheet, iOS): picking a destination drops a pin and a half-modal route sheet slides up from the bottom. A "Direction" title header sits at the top with a drag indicator. The trip rows are grouped in one rounded card: an origin row ("My Location" with a blue navigation-arrow icon), the destination row (orange category icon + name), and an "Add stop" row (blue plus icon) — each with a decorative hamburger (≡) drag-handle on the right. Below the card: a "Leave at" row with a gray "Now" pill, a full-width blue "Check Route" button (motorcycle icon), and a stack of route cards (ETA + distance) in a scrollable area. The map behind the sheet shows the route drawn over the map, with the whole trip fitted in view, plus map badges: a white ETA pill at the destination and a blue "X min Fastest" badge on the selected route. The sheet's drag handle and medium/large detents let the rider peek at the map or expand the cards.
+
+## 1. Screens
+
+- **Sheet closed:** map with the destination pin; search page dismissed after the pick (pre-sheet state).
+- **Auto-open loading:** half-sheet appears immediately after the pick; ProgressView in the cards area while MKDirections runs.
+- **Loaded:** "Direction" header; grouped card (origin "My Location", destination category icon + name, "Add stop"); "Leave at" row (gray "Now" pill); "Check Route" button; scrollable route cards (ETA + distance); selected card marked; route + map badges drawn on the map.
+- **Sheet dismissed — map + pill:** rider drags the sheet down; the map keeps everything exactly as-is (route alternatives drawn, selection, pins, camera, badges) and the route-summary pill floats bottom-center with the selected route's ETA + distance ("Calculating…" while routing is still loading). Tapping the pill reopens the sheet with all state preserved.
+- **Leave-at picker:** tapping the "Now"/time pill presents the `DepartureTimePickerSheet` (Apple Maps "Leave at" style) as a `.large` sheet with a drag indicator: a header (gray circle X · centered bold "Leave at" · `Color.checkRouteBlue` up-arrow), a `.graphical` date-only calendar (min = today, past dates disabled), a "Time" row whose gray capsule pill opens a nested wheel time sub-sheet, and a "Leave Now" row. Draft semantics: date/time changes are drafts held in the picker only — the blue up-arrow applies `departureDate` (re-runs routing with traffic-aware ETA) and "Leave Now" resets to Now; X/swipe-dismiss cancels without a re-plan.
+- **Failed:** routing error/offline — error message in the cards area with no route on the map; Retry REUSES the "Check Route" button (R16) — no separate Retry control.
+- **Origin unset:** location denied/unknown — origin row reads "Set origin"; no auto-route; tapping it opens the search page in "where from?" mode.
+- **Denied location:** permission denied → origin unset state (above); the map's location controls keep the existing maps-screen denied overlay behavior; the sheet still opens.
+
+## 2. Layout
+
+- **Sheet:** half-modal `.sheet` over the map, `.presentationDetents([.medium, .large])`, `.presentationDragIndicator(.visible)`. Content column from top: "Direction" title → grouped card (origin → destination → add-stop rows) → "Leave at" row → "Check Route" button → route cards (scrollable area). Dismissal is drag-only (drag the sheet down) — no close/X button in the sheet.
+- **Header:** "Direction" title at the sheet top, centered, `Color.primary`.
+- **Grouped card:** a single rounded card (`.secondarySystemBackground`) wrapping the three trip rows, each ≥ 44 pt and separated by hairline dividers:
+  - **Origin row:** leading blue `location.north.line.fill` (navigation-arrow) icon; label "Origin" (secondary) + value "My Location" (primary, default = current location when known; "Set origin" when unset); trailing decorative `line.3.horizontal` (≡) handle. Tap → `SearchPage` in "where from?" mode.
+  - **Destination row:** leading orange category icon (from `SearchResult.categorySymbol`, orange tint) + the confirmed place name (read-only). Trailing decorative handle.
+  - **Add-stop row:** leading blue `plus` icon; empty state = "+ Add stop" (≥ 44 pt); tap → `SearchPage` in "add stop" mode. Filled state = stop name + trailing X (≥ 44 pt, VO "Remove stop") that removes it and re-routes. Trailing decorative handle.
+  - **Decorative drag-handles** are `.accessibilityHidden(true)` and do nothing on tap (reordering is out of scope).
+- **Leave-at row:** label "Leave at" + a gray pill "Now" (or the chosen time); the pill is the tap target (≥ 44 pt) → presents `DepartureTimePickerSheet`.
+- **Check Route button:** full-width blue rounded button, `scooter` (motorcycle) SF Symbol + "Check Route" label, ≥ 44 pt; re-runs `plan()` (idempotent refresh / Retry). If no motorcycle symbol exists in the SF Symbol set, fall back to the closest available symbol (e.g. `figure.outdoor.cycle`); `scooter` is the preferred choice when available.
+- **Route cards:** horizontal stack of cards under the trip rows (vertical scroll in the large detent), one per alternative. Card content: "X min" (large) + "Y km" (secondary) + selected/not-selected marker. Card ≥ 44 pt.
+- **Map badges:** white ETA pill attached at the destination marker ("39 min" = selected route's travel time) + blue "X min Fastest" badge on the selected route polyline (near its start/midpoint). Both update on selection change; both a11y-hidden.
+- **Map:** selected route `MKPolyline` thicker/brighter; other alternatives muted; camera fits origin → stop → destination via a map region.
+- **Route-summary pill (sheet dismissed):** floating capsule pinned bottom-center above the home indicator / safe area; content "X min · Y km"; the full pill is the tap target (≥ 44 pt). Shown while the sheet is dismissed and routing has not failed; shows the selected route's ETA·distance once a plan exists, "Calculating…" while a request is in flight.
+- **Landscape (mounted):** the sheet stays a half-modal; cards scroll horizontally so nothing is cut off; all rows stay inside the safe area; the pill stays bottom-center above the home indicator.
+
+## 3. Components
+
+- **TripPlannerSheet** — the half-modal sheet; owns the header, grouped card, Leave-at row, Check Route button, and cards area; renders `TripPlannerViewModel` state. Dismissed by drag only.
+- **DepartureTimePickerSheet** — Apple Maps "Leave at" style sheet modal for the "Leave at" picker, `.large` detent + drag indicator:
+  - **Header:** gray circle X (left, ≥ 44 pt, VO "Cancel") dismisses with no re-plan · centered bold "Leave at" (`.isHeader`) · `Color.checkRouteBlue` filled circle with white `arrow.up` (right, ≥ 44 pt, VO "Apply", hint "Apply departure time and re-route") commits the draft (`setDepartureDate(draftDate)`) and dismisses.
+  - **Calendar:** `.graphical` date-only `DatePicker` ("Choose departure date", `in: Date()...`, min = today, past days disabled), tinted `Color.checkRouteBlue`; month/year header + chevrons, weekday row, today highlighted, selected day = filled circle.
+  - **Time row:** secondary "Time" label + gray capsule pill with `Color.primary` short-time text (e.g. "3:00"), ≥ 44 pt → opens the nested time sub-sheet.
+  - **Time sub-sheet:** nested `.sheet` at `.height(300)` — bold "Time" title, `.wheel` `[.hourAndMinute]` `DatePicker` bound to `timeDraft`; blue "Done" merges `timeDraft` into the draft date and dismisses; swipe-dismiss = no change (edge Q).
+  - **Leave Now row:** `Color.blue` text button → `setDepartureDate(nil)` + dismiss (VO "Leave now", hint "Reset departure to now").
+  - **Draft-commit:** view-local `@State draftDate = viewModel.departureDate ?? Date()` (default = now's time; date changes preserve the time component). Re-plan happens ONLY on arrow-apply or Leave Now through the VM's single `setDepartureDate` commit point; X/swipe-dismiss makes no VM call (edge M). The VM clamps a past draft to now on apply (edge L).
+  - Light/dark values in §4, VO labels/hints in §5, motion in §6.
+- **RouteCard** — one route alternative: ETA + distance + selection state; selectable, ≥ 44 pt; VO "Route N, X minutes, Y km, selected/not selected".
+- **MapBadgeDestinationETA / MapBadgeFastest** — the white destination ETA pill and the blue "X min Fastest" route badge; both a11y-hidden.
+- **OriginRow / DestinationRow / StopRow** — the three trip rows (see §2), each ≥ 44 pt with the labels in §5.
+- **RouteSummaryPill** — floating capsule (see §2) shown while the trip sheet is dismissed and routing has not failed; renders the selected route as "X min · Y km" once a plan exists (or "Calculating…" while a request is in flight); tap reopens the trip sheet with all state preserved; ≥ 44 pt (full pill tappable), VO label + hint.
+- **SearchPage (reused)** — the existing search page from `docs/designs/search.md`, opened in "where from?" mode (origin) or "add stop" mode (stop); title/placeholder adjusted, same rows/recents/accessibility.
+- **DirectionsService (Live + Mock)** — protocol-first service behind the ViewModel; the Mock returns scripted alternatives for previews/tests.
+
+## 4. Light / Dark Mode
+
+- Sheet background: `Color.searchBackground` (#F1F2F6) in light / `Color(.systemBackground)` in dark — consistent with `docs/designs/search.md`.
+- Grouped card (trip rows): `Color.searchElement` (#C6C6C8) rounded card in light / `Color(.secondarySystemBackground)` in dark — visible on the sheet background in both modes; hairline dividers between rows.
+- Labels ("Origin", "Destination", "Add stop", "Leave at"): `Color.secondary`; values ("My Location", destination name, "Now"): `Color.primary` — values ≥ 4.5:1 on the card/sheet background; secondary labels are lower contrast in light (accepted user choice, same caveat as `docs/designs/search.md:35`).
+- Row icons: origin = blue navigation arrow (`Color.blue`), destination = category icon tinted orange (`Color.orange`), add-stop plus = blue (`Color.blue`). The icons are DECORATIVE — the row label carries the information — and are `.accessibilityHidden(true)` (the row exposes the label via VO), so non-text contrast does not apply.
+- Decorative drag-handles: `Color.secondary`, muted, `.accessibilityHidden(true)`.
+- "Leave at" Now pill: `Color(.systemGray6)` in light / `Color(.systemGray5)` in dark backing with `Color.primary` text; gray pill.
+- Check Route button: solid `Color(red: 0, green: 0.33, blue: 0.83)` (~#0054D4) with white text + `scooter` icon (white) — white-on-blue ≈ 6.8:1; full-width, rounded.
+- Route on the map: selected = systemBlue at full opacity and thicker; others = same hue at ~40% opacity and thinner — ≥ 3:1 against the map in both modes, and selection is also conveyed by the card marker (never color alone).
+- Route-summary pill: solid capsule backing — `Color(.systemBackground)` in light / `Color(.secondarySystemBackground)` in dark — with `Color.primary` text (≥ 4.5:1 in both modes) and a subtle shadow so it reads as floating above the map.
+- Map badges: destination ETA pill — `Color(.systemBackground)` backing with dark text in light mode, dark-adapted (`Color(.systemBackground)` in dark) with light text in dark mode, subtle shadow; route badge — solid `Color(red: 0, green: 0.33, blue: 0.83)` (~#0054D4) with white text ("X min Fastest"), subtle shadow — white-on-blue ≈ 6.8:1; both a11y-hidden.
+- DepartureTimePickerSheet: `.large` sheet on `Color(.systemBackground)` in both modes; X circle backing `Color(.systemGray5)` in light / `Color(.systemGray4)` in dark with a `Color.primary` glyph; Time pill backing `Color(.systemGray6)` in light / `Color(.systemGray5)` in dark with `Color.primary` text (≥ 4.5:1 in both modes); Apply arrow = `Color.checkRouteBlue` filled circle with white `arrow.up` (white-on-blue ≈ 6.8:1); "Leave Now" text = `Color.blue` (systemBlue, dark-adapts, ≥ 4.5:1 in both modes); `.graphical` calendar (tinted `Color.checkRouteBlue`) and `.wheel` time picker are standard system controls that auto-adapt to light/dark.
+- Denied-location state inherits the maps-screen denied overlay (dark scrim + solid card).
+
+## 5. Accessibility
+
+Per `.opencode/rules/004-accessibility.md`:
+
+- VoiceOver labels (exact):
+  - Sheet header: **"Direction"**.
+  - Origin row: **"Origin, My Location"** when known / **"Origin, Set origin"** when unset (hint: "Double tap to change origin").
+  - Destination row: **"Destination, <name>"** (read-only).
+  - Add-stop row: **"Add stop"** when empty / **"Stop, <name>"** when filled; remove X: **"Remove stop"**.
+  - Leave-at row: **"Leave at, Now"** when departure is `nil` / **"Leave at, <time>"** when a departure time is set; hint: "Double tap to choose departure time".
+  - Check Route button: **"Check Route"**; hint "Double tap to re-run route planning".
+  - Route card: **"Route N, X minutes, Y km, selected/not selected"** (N = position among alternatives); hint "Double tap to select this route".
+  - Route-summary pill: **"Route summary, X minutes, Y kilometers"** when loaded / **"Route summary, calculating route"** while routing is in flight; hint "Double tap to reopen trip planner".
+  - DepartureTimePickerSheet: header **"Leave at"**; X button **"Cancel"** (no re-plan); **"Apply"** arrow (hint "Apply departure time and re-route"); calendar **"Choose departure date"**; Time pill **"Time, <time>"** (hint "Double tap to choose the time"); time sub-sheet **"Time"** header + **"Done"**; **"Leave now"** (hint "Reset departure to now").
+  - Map badges: `.accessibilityHidden(true)` — the same ETA/distance is already exposed by the route cards and the destination pill duplicates card info.
+  - Decorative drag-handles: `.accessibilityHidden(true)`.
+- **Drag-only dismissal:** the main Direction sheet has no close button (drag down to dismiss; SwiftUI still exposes the standard system dismiss action for VoiceOver users). The `DepartureTimePickerSheet` is the exception — its header carries explicit X (Cancel) and up-arrow (Apply) controls with VO labels in addition to swipe-dismiss.
+- All interactive targets (rows, X, Now pill, Check Route, cards, pill; picker X, up-arrow, Time pill, Leave Now, sub-sheet Done) ≥ 44 × 44 pt.
+- Dynamic Type: labels/values scale; cards and rows grow with text size; no `fixedSize` vertical growth; cards scroll when space runs out.
+- Reduce Motion: no custom sheet animation (system transition); the camera fit animates only for distance and snaps instantly when Reduce Motion is on; the picker sheet uses the system modal transition.
+- Contrast: `Color.primary` text on solid backings ≥ 4.5:1; `Color.secondary` labels are lower contrast in light (accepted user choice, same caveat as `docs/designs/search.md:35`); route selection never conveyed by color alone.
+
+## 6. Motion / Haptics
+
+- **Sheet:** system half-modal presentation (detent spring), drag indicator visible; dismissal is the system drag-down gesture (no close button) with no custom animation.
+- **Detent animation:** default system snap between medium and large.
+- **Camera fit:** on load and on every origin/stop/departure change the camera animates to the region fitting origin → stop → destination; **Reduce Motion** → instant jump, no animation.
+- **DepartureTimePickerSheet:** the picker and its nested Time sub-sheet present/dismiss with the system sheet modal transition (no custom animation); the `.graphical` calendar's month change is the system page transition; **Reduce Motion** → system defaults, no custom movement.
+- **Map badges:** the destination ETA pill and the route badge fade/transition (opacity) when the selection changes; no motion on initial render; **Reduce Motion** → instant swap, no fade.
+- **No haptics required this branch** (route selection and departure picking are plain taps; ride-start/warning haptics come later).
