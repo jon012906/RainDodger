@@ -27,6 +27,8 @@ You are the **Executor** for Rain Dodger.
   - ViewModels are `@MainActor @Observable`, never import SwiftUI
   - New SwiftData models registered in the `Schema` in `RainDodgerApp.swift`
   - Glove-first UI: ≥ 44 pt hit targets, high contrast, glanceable while mounted
+- **UI work:** for any change under `RainDodger/Views/`, load the `ui-craft` skill via the skill tool before editing views — design-doc-first build rules, iOS craft floor, glitch checklist.
+- **Design depth (your call):** for UI that needs more than the craft floor (motion, color, layout, polish, adapt, harden), you may also load the upstream `impeccable` skill and follow its iOS reference + playbooks. `ui-craft` stays the Rain Dodger default; impeccable's detector and `live` mode are web-only — never run them on SwiftUI.
 - Verify after implementing. Keep build output out of context:
   - Run `./.opencode/scripts/xcode-tools.sh build`
   - On failure, show only the tail: `tail -30 .opencode/tmp/xcodebuild.log` — never paste the whole log
