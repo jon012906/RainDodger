@@ -110,11 +110,7 @@ final class TripPlannerViewModel {
             selectedRouteID: id
         )
         guard let selected = plan.alternatives.first(where: { $0.id == id }) else { return }
-        if selected.rainSegments.isEmpty {
-            loadWeather(for: selected, departure: departureDate)
-        } else {
-            weatherState = .loaded
-        }
+        weatherState = selected.rainSegments.isEmpty ? .idle : .loaded
     }
 
     func setDepartureDate(_ date: Date?) {

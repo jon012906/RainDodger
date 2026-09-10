@@ -14,6 +14,7 @@ struct TripPlannerSheet: View {
     let searchCoordinate: CLLocationCoordinate2D?
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
     @State private var searchViewModel: SearchViewModel
     @State private var activeSearch: SearchTarget?
     @State private var isDeparturePickerPresented = false
@@ -32,6 +33,7 @@ struct TripPlannerSheet: View {
     }
 
     private enum SearchTarget: String, Identifiable {
+        case destination
         case origin
         case stop
 
@@ -39,6 +41,7 @@ struct TripPlannerSheet: View {
 
         var context: SearchContext {
             switch self {
+            case .destination: return .destination
             case .origin: return .origin
             case .stop: return .stop
             }
@@ -86,6 +89,9 @@ struct TripPlannerSheet: View {
             leaveAtRow
             checkRouteButton
             cardsArea
+            if showsRouteDetails {
+                routeDetailsRow
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 16)
@@ -137,15 +143,22 @@ struct TripPlannerSheet: View {
 
     private var destinationRow: some View {
         HStack(spacing: 8) {
-            HStack(spacing: 12) {
-                rowIcon(destinationSymbol, color: .orange)
-                labelValue("Destination", value: destinationValue, valueLines: 2)
-                Spacer(minLength: 0)
+            Button {
+                presentSearch(.destination)
+            } label: {
+                HStack(spacing: 12) {
+                    rowIcon(destinationSymbol, color: .orange)
+                    labelValue("Destination", value: destinationValue, valueLines: 2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 16)
+                .contentShape(Rectangle())
             }
-            .padding(.leading, 16)
+            .buttonStyle(.plain)
             .frame(maxWidth: .infinity, minHeight: 44)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Destination, \(destinationValue)")
+            .accessibilityHint("Double tap to change destination")
             dragHandle
         }
     }
@@ -265,7 +278,10 @@ struct TripPlannerSheet: View {
     }
 
     private var checkRouteButton: some View {
-        Button(action: viewModel.checkRoute) {
+        Button {
+            dismiss()
+            viewModel.checkRoute()
+        } label: {
             HStack(spacing: 8) {
                 Image(systemName: "scooter")
                     .font(.system(size: 17, weight: .semibold))
@@ -333,6 +349,37 @@ struct TripPlannerSheet: View {
         }
     }
 
+    private var showsRouteDetails: Bool {
+        guard viewModel.state == .loaded, let plan = viewModel.routePlan else { return false }
+        return plan.alternatives.contains { $0.id == plan.selectedRouteID }
+    }
+
+    private var routeDetailsRow: some View {
+        Button {
+            detent = .large
+            showsDetail = true
+        } label: {
+            HStack(spacing: 12) {
+                Text("Route details")
+                    .font(.rdRowName)
+                    .foregroundStyle(Color.primary)
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(rowBacking, in: RoundedRectangle(cornerRadius: 16))
+            .contentShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Route details")
+        .accessibilityHint("Double tap to open step-by-step directions")
+    }
+
     private var originValue: String {
         viewModel.origin?.name ?? "Set origin"
     }
@@ -365,6 +412,8 @@ struct TripPlannerSheet: View {
 
     private func handlePick(_ result: SearchResult, for target: SearchTarget) {
         switch target {
+        case .destination:
+            viewModel.updateDestination(waypoint(from: result))
         case .origin:
             viewModel.updateOrigin(waypoint(from: result))
         case .stop:

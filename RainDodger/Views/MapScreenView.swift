@@ -49,17 +49,6 @@ struct MapScreenView: View {
                     .padding(.top, 12)
                     .padding(.leading, 16)
             }
-            .overlay(alignment: .bottomTrailing) {
-                VStack(spacing: 12) {
-//                    CompassControl(
-//                        heading: viewModel.heading,
-//                        onTap: viewModel.resetNorthAndRecenter
-//                    )
-                    RecenterButton(onRecenter: viewModel.recenter)
-                }
-                .padding(.top, 8)
-                .padding(.trailing, 16)
-            }
             .overlay(alignment: .bottom) {
                 VStack(spacing: 12) {
                     if let locationErrorMessage = viewModel.locationErrorMessage {
@@ -78,6 +67,18 @@ struct MapScreenView: View {
                 }
                 .padding(.horizontal, isLandscape ? 0 : 16)
                 .padding(.bottom, isLandscape ? 8 : 12)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                VStack(spacing: 12) {
+//                    CompassControl(
+//                        heading: viewModel.heading,
+//                        onTap: viewModel.resetNorthAndRecenter
+//                    )
+                    RecenterButton(onRecenter: viewModel.recenter)
+                }
+                .padding(.top, 8)
+                .padding(.trailing, 16)
+                .padding(.bottom, isLandscape ? 76 : 80)
             }
             .overlay {
                 if tripPlanner.isWeatherLoading {
@@ -129,6 +130,11 @@ struct MapScreenView: View {
         }
         .onChange(of: tripPlanner.weatherState) { _, _ in
             refreshRainOverlays()
+        }
+        .onChange(of: tripPlanner.state) { _, state in
+            if case .failed = state, !viewModel.isTripSheetPresented {
+                viewModel.isTripSheetPresented = true
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

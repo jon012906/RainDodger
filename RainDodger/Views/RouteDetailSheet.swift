@@ -13,6 +13,7 @@ struct RouteDetailSheet: View {
     let onBack: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 12) {
@@ -160,7 +161,10 @@ struct RouteDetailSheet: View {
     }
 
     private var checkRouteButton: some View {
-        Button(action: viewModel.checkRoute) {
+        Button {
+            dismiss()
+            viewModel.checkRoute()
+        } label: {
             HStack(spacing: 8) {
                 Image(systemName: "cloud.rain")
                     .font(.system(size: 17, weight: .semibold))

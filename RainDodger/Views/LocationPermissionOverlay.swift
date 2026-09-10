@@ -21,7 +21,7 @@ struct LocationPermissionOverlay: View {
                 Text("Location Access Needed")
                     .font(.title2.weight(.semibold))
                     .multilineTextAlignment(.center)
-                Text("Rain Dodger needs your location to recenter and show the compass")
+                Text("Rain Dodger needs your location to recenter the map")
                     .font(.body)
                     .foregroundStyle(Color.secondary)
                     .multilineTextAlignment(.center)
