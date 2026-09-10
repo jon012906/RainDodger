@@ -140,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `fix/ui-enhancements` |
-| Feature folders (files this branch owns/adds) | `docs/specs/route-detail.md` · `docs/designs/route-detail.md` · `docs/flows/route-detail.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
-| Models | `RainDodger/Models/RouteStep.swift` (new — `RouteStep` + `RouteTurnType` + English instruction parser) · `RainDodger/Models/RoutePlan.swift` (modified — `RouteAlternative.steps` + shared `RainMetrics.wetDistance`) |
-| Services | `RainDodger/Services/DirectionsService.swift` (modified — Live/Mock build `steps` from `MKRoute.steps`, distance-aligned; both legs stitched for stops) |
-| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` (modified — rain→step mapping, per-step representative chance, wet-distance summary) |
-| Views | `RainDodger/Views/RouteDetailSheet.swift` (new) · `RainDodger/Views/RouteStepRow.swift` (new) · `RainDodger/Views/RouteCard.swift` (modified — re-tap selected card expands) · `RainDodger/Views/TripPlannerSheet.swift` (modified — cards/steps mode, medium/large detent selection) · `RainDodger/Views/MapScreenView.swift` (modified — shared wet-distance helper) |
+| Branch | `feat/rain-time-markers` |
+| Feature folders (files this branch owns/adds) | `docs/specs/weather-forecast.md` · `docs/designs/weather-forecast.md` · `docs/flows/weather-forecast.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Models | `RainDodger/Models/RoutePlan.swift` (modified — `RainSegment.arrivalDate` + `WetStretch` value type + `RainMetrics.wetStretches(for:)`) |
+| Services | — (no changes this branch) |
+| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` (modified — wet-stretch derivation + stretch arrival times; departure/route change clears badges + legend time via the existing `weatherState = .idle` reset) |
+| Views | `RainDodger/Views/MapScreenView.swift` (modified — private `RainTimeBadge` per wet stretch, below the route line) · `RainDodger/Views/RainLegend.swift` (modified — legend time line input + extended VO label) |
 | Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 

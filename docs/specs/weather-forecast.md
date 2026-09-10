@@ -2,7 +2,7 @@
 
 ## 1. Goal
 
-After the rider taps "Check Route", Rain Dodger computes a rainfall forecast along the **selected** route over time: the route path is sampled every 5 km, each sample gets the precipitation probability at the rider's estimated arrival time, and the route is redrawn on the map as color-coded segments (<30% route-blue, 30–60% yellow, ≥60% red) with a legend and a wet-distance summary — so the rider can see at a glance where the road will be rained on.
+After the rider taps "Check Route", Rain Dodger computes a rainfall forecast along the **selected** route over time: the route path is sampled every 5 km, each sample gets the precipitation probability at the rider's estimated arrival time, and the route is redrawn on the map as color-coded segments (<30% route-blue, 30–60% yellow, ≥60% red) with a legend and a wet-distance summary — plus a small time badge at the start of each wet stretch showing the rider's estimated ARRIVAL time there — so the rider can see at a glance where the road will be rained on **and when they'll get there**.
 
 ## 2. User Problem
 
@@ -23,18 +23,22 @@ After the rider taps "Check Route", Rain Dodger computes a rainfall forecast alo
 | R7 | Weather computed for the selected route only; re-selecting a route NEVER auto-fetches — a route with cached segments reuses them (weatherState `.loaded`), one without segments shows no forecast (`.idle`) until the rider taps Check Route | P0 | No weather on unselected alternatives; no auto re-fetch on re-selection |
 | R8 | MVVM: `@MainActor @Observable` `TripPlannerViewModel` injects `WeatherService`; no comments; accessibility per `.opencode/rules/004-accessibility.md`; mocks in all previews | P0 | |
 | R9 | Docs: spec/design/flow per templates; `docs/template/spec-guide.md` §9 + `docs/implementation.md` updated | P0 | |
+| R10 | Rain-time markers: one small map badge at the start of each wet stretch (contiguous samples with `rainChance ≥ RainMetrics.wetThreshold`) showing the rider's estimated ARRIVAL time there, locale-aware short time; cap 3 badges (first 3 wet stretches by route order); recomputed only by the next Check Route — a departure/route change clears badges and legend time via the existing idle reset; cached re-select renders badges instantly from stored data | P0 | Badge = `cloud.rain.fill` + short time (e.g. "2:40 PM"; 24h locales "14:40"); NO "Rain" word on the badge; the legend counts the rest ("+N more") |
 
 ## 4. Data Model
 
 In-memory value types only — **no SwiftData on this branch**:
 
 - **`RainSegment`** — one forecast sample along the route:
-  - `id: UUID`, `index: Int` (sample ordinal), `coordinate: CLLocationCoordinate2D`, `distanceFromStart: CLLocationDistance`, `rainChance: Double` (0–1).
-- **`RouteAlternative`** gains `rainSegments: [RainSegment]` (default `[]` so existing inits stay source-compatible).
+  - `id: UUID`, `index: Int` (sample ordinal), `coordinate: CLLocationCoordinate2D`, `distanceFromStart: CLLocationDistance`, `arrivalDate: Date` (the exact sampled arrival), `rainChance: Double` (0–1).
+- **`WetStretch`** (new value type) — one contiguous run of wet samples (`rainChance ≥ RainMetrics.wetThreshold`), derived from `rainSegments` (never stored), used to place the time badges:
+  - `id: Int` (index of the run's first wet sample — stable identity across renders and re-fetches), `startCoordinate: CLLocationCoordinate2D`, `arrivalDate: Date` (arrival at the stretch start — the exact time the forecast was sampled for), `rainChance: Double` (representative/max of the stretch), `distanceFromStart: CLLocationDistance` (of the stretch start).
+- **`RouteAlternative`** gains `rainSegments: [RainSegment]` (default `[]` so existing inits stay source-compatible); wet stretches are computed via `RainMetrics.wetStretches(for:)` — not stored.
 
 ```mermaid
 erDiagram
   ROUTE_ALTERNATIVE ||--o{ RAIN_SEGMENT : "sampled every 5 km"
+  RAIN_SEGMENT }o--|| WET_STRETCH : "contiguous wet runs ≥ threshold"
   ROUTE_ALTERNATIVE {
     uuid id
     double distance
@@ -48,7 +52,15 @@ erDiagram
     int index
     coordinate coordinate
     double distanceFromStart
+    date arrivalDate
     double rainChance
+  }
+  WET_STRETCH {
+    uuid id
+    coordinate startCoordinate
+    date arrivalDate
+    double rainChance
+    double distanceFromStart
   }
 ```
 
@@ -59,8 +71,13 @@ erDiagram
 - **Concurrency:** samples fetched in chunks of ≤ 8 via `withThrowingTaskGroup` (bounded); results sorted by `index` before attaching.
 - **Bands:** < 0.30 = Dry (route-blue), 0.30–0.60 = Light (yellow), ≥ 0.60 = Heavy rain (red).
 - **Wet distance:** sum of segment lengths whose `rainChance ≥ 0.5`; segment length = next sample's `distanceFromStart − this sample's`, and the last segment extends to the route's total distance.
+- **Wet stretch grouping:** a contiguous run of samples with `rainChance ≥ RainMetrics.wetThreshold` (0.5) forms ONE wet stretch, starting at the first wet sample's coordinate; that sample's `arrivalDate` (the exact time the forecast was sampled for) is the stretch's arrival time. A single dry sample splits two wet runs into two stretches.
+- **Time badges:** one badge per wet stretch, placed at the stretch-start coordinate; capped at 3 — the FIRST 3 wet stretches by route order (most imminent); the legend counts the rest. Badge shows `cloud.rain.fill` + the stretch's arrival time, locale-aware short time (e.g. "2:40 PM"; 24h locales "14:40") — no "Rain" word on the badge.
+- **Time formatting:** locale-aware short time (`Date.FormatStyle` hour/minute) — never a hardcoded "AM/PM" string.
+- **Overlap accepted:** two nearby wet stretches may overlap badges on the map; no distance filter — bounded only by the cap.
+- **Departure change:** `setDepartureDate` → `plan()` → `weatherState = .idle` — badges and legend time clear until the next Check Route recomputes (no re-scoring without re-fetch; full departure-time re-scoring is Phase 4).
 - **Weather failure:** catch the error, keep the route and plan, set `weatherState = .unavailable` → banner. Never fail the plan.
-- **Re-selection:** selecting another route card NEVER fetches — a route with cached segments reuses them (weatherState `.loaded`, instant); a route without segments shows no forecast (weatherState `.idle`) until the rider taps Check Route. An in-flight fetch from a prior Check Route continues and its results attach only to the route it was requested for — never to a newly selected route.
+- **Re-selection:** selecting another route card NEVER fetches — a route with cached segments reuses them (weatherState `.loaded`, instant, badges + legend time included); a route without segments shows no forecast (weatherState `.idle`) until the rider taps Check Route. An in-flight fetch from a prior Check Route continues and its results attach only to the route it was requested for — never to a newly selected route.
 - **Re-plan:** an automatic re-route (destination/origin/stop/departure change) cancels the in-flight weather task, resets the weather state to idle, and re-runs routing only — no forecast until the rider taps Check Route again.
 - **Trigger:** weather is fetched ONLY by `checkRoute()` (the Check Route tap); re-selecting a route never fetches.
 
@@ -82,6 +99,10 @@ erDiagram
 - [ ] Legend chips "Dry / Light / Heavy rain" + % ranges + "X km of Y km with rain ≥ 50%"; not color-only
 - [ ] WeatherKit failure/offline → non-blocking "live rain unavailable" banner in place of the legend; route fully shown; plan not failed
 - [ ] Re-selecting a route NEVER fetches: cached segments reused instantly (`.loaded`); a route without segments shows none (`.idle`) until Check Route is tapped
+- [ ] After Check Route, one `RainTimeBadge` per wet stretch at the stretch start: `cloud.rain.fill` + locale-aware short arrival time (e.g. "2:40 PM" / "14:40"); at most 3 badges (first 3 wet stretches by route order); the legend time line lists the capped times + "+N more" for the rest
+- [ ] Departure/route change (`setDepartureDate`/`plan()`) clears badges + legend time via the existing idle reset until the next Check Route recomputes — no re-scoring without re-fetch
+- [ ] Re-selecting a route with cached segments renders its badges instantly from stored data (`.loaded`); a route with no wet stretches shows no badges and no legend time line
+- [ ] Badges are decorative (`.accessibilityHidden(true)`); the legend's single combined VO label carries the capped times + remainder count (exact wording per design §5)
 - [ ] A11y per `.opencode/rules/004-accessibility.md`: VO labels, non-color-only, ≥44 pt, Dynamic Type, Reduce Motion
 - [ ] `TripPlannerViewModel` injects `weatherService`; `ContentView` injects `LiveWeatherService`; all `#Preview`s use `MockWeatherService`
 - [ ] Docs: `docs/specs/weather-forecast.md`, `docs/designs/weather-forecast.md`, `docs/flows/weather-forecast.md` per templates; `docs/template/spec-guide.md` §9 + `docs/implementation.md` updated
