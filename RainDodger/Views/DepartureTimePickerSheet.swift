@@ -207,6 +207,9 @@ struct DepartureTimePickerSheet: View {
 
 #Preview {
     DepartureTimePickerSheet(
-        viewModel: TripPlannerViewModel(directionsService: MockDirectionsService())
+        viewModel: TripPlannerViewModel(
+            directionsService: MockDirectionsService(),
+            weatherService: MockWeatherService()
+        )
     )
 }

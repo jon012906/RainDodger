@@ -69,7 +69,10 @@ struct RouteSummaryPill: View {
 
 #Preview {
     RouteSummaryPill(
-        viewModel: TripPlannerViewModel(directionsService: MockDirectionsService()),
+        viewModel: TripPlannerViewModel(
+            directionsService: MockDirectionsService(),
+            weatherService: MockWeatherService()
+        ),
         onTap: {}
     )
     .padding(16)

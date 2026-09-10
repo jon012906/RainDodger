@@ -35,25 +35,50 @@ struct RouteWaypoint: Identifiable, Hashable {
     }
 }
 
+struct RainSegment: Identifiable {
+    let id: UUID
+    let index: Int
+    let coordinate: CLLocationCoordinate2D
+    let distanceFromStart: CLLocationDistance
+    let rainChance: Double
+
+    init(
+        id: UUID = UUID(),
+        index: Int,
+        coordinate: CLLocationCoordinate2D,
+        distanceFromStart: CLLocationDistance,
+        rainChance: Double
+    ) {
+        self.id = id
+        self.index = index
+        self.coordinate = coordinate
+        self.distanceFromStart = distanceFromStart
+        self.rainChance = rainChance
+    }
+}
+
 struct RouteAlternative: Identifiable {
     let id: UUID
     let distance: CLLocationDistance
     let travelTime: TimeInterval
     let polyline: MKPolyline
     let coordinatePoints: [CLLocationCoordinate2D]
+    let rainSegments: [RainSegment]
 
     init(
         id: UUID = UUID(),
         distance: CLLocationDistance,
         travelTime: TimeInterval,
         polyline: MKPolyline,
-        coordinatePoints: [CLLocationCoordinate2D]
+        coordinatePoints: [CLLocationCoordinate2D],
+        rainSegments: [RainSegment] = []
     ) {
         self.id = id
         self.distance = distance
         self.travelTime = travelTime
         self.polyline = polyline
         self.coordinatePoints = coordinatePoints
+        self.rainSegments = rainSegments
     }
 }
 
