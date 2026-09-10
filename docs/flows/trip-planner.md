@@ -56,7 +56,7 @@
 ## 5. Main User Journey
 
 1. Rider picks a destination in the search page (pick = confirm) → returns to the map, pin dropped (R1).
-2. The "Direction" half-modal sheet auto-opens (medium/large detents, drag indicator): "Direction" header; grouped card (origin "My Location", tappable destination with category icon, Add-stop row); "Leave at" row ("Now" pill); "Check Route" button; a "Route details" row appears below the cards once a route is loaded (R1, R2, R3, R4, R15, R16).
+2. The "Direction" half-modal sheet auto-opens (medium/large detents, drag indicator): "Direction" header; grouped card (origin "My Location", tappable destination with category icon, Add-stop row); "Leave at" row (date-aware pill — "Now" / "2:00 PM" / "27 Sep 2:00 PM"); "Check Route" button; a "Route details" row appears below the cards once a route is loaded (R1, R2, R3, R4, R15, R16).
 3. Origin = "My Location" (current location when known) → a single MKDirections request runs (source = current location, destination, `requestsAlternateRoutes = true`, `.automobile`); the cards area shows loading (R2, R5).
 4. Optional: rider taps "Add stop" → `SearchPage` opens in add-stop mode; picking a stop fills the slot (R4).
 5. Optional: rider taps the stop's X → stop removed (R4).
