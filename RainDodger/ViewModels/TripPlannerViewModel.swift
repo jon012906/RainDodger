@@ -221,7 +221,12 @@ final class TripPlannerViewModel {
                             travelTime: alt.travelTime,
                             polyline: alt.polyline,
                             coordinatePoints: alt.coordinatePoints,
-                            rainSegments: segments
+                            rainSegments: segments,
+                            steps: RainMetrics.mappedSteps(
+                                alt.steps,
+                                rainSegments: segments,
+                                totalDistance: alt.distance
+                            )
                         )
                     },
                     selectedRouteID: plan.selectedRouteID
