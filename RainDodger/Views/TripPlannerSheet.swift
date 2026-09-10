@@ -55,6 +55,12 @@ struct TripPlannerSheet: View {
         return formatter
     }()
 
+    private let departureDayMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "dMMM", options: 0, locale: Locale.current)
+        return formatter
+    }()
+
     var body: some View {
         Group {
             if showsDetail {
@@ -394,7 +400,11 @@ struct TripPlannerSheet: View {
 
     private var leaveAtPillText: String {
         guard let departureDate = viewModel.departureDate else { return "Now" }
-        return departureTimeFormatter.string(from: departureDate)
+        let time = departureTimeFormatter.string(from: departureDate)
+        if Calendar.current.isDateInToday(departureDate) {
+            return time
+        }
+        return "\(departureDayMonthFormatter.string(from: departureDate)) \(time)"
     }
 
     private var pillBacking: Color {
