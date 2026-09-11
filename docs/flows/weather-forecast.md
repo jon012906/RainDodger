@@ -28,6 +28,7 @@
 | R8 | MVVM + a11y + mocks | Steps 2–7 |
 | R9 | Docs updated | This doc |
 | R10 | Rain-time markers (badges + legend time line, cap 3, idle-clear, cached instant) | Steps 4, 7, 9, edges J–M |
+| Spec §5 | Destination clear → `weatherState = .idle`, rain overlays cleared | Step 10, Edge N |
 
 ## 4. Design Coverage
 
@@ -42,6 +43,7 @@
 | Design §2 | Time badge + legend time line layout | Steps 4, 7 |
 | Design §3 | WeatherLoadingOverlay / RainLegend / RainUnavailableBanner / RainTimeBadge / WetStretch | Steps 2, 4, Edge A |
 | Design §5 | VO labels, non-color-only, 44 pt, Dynamic Type, Reduce Motion | Steps 2–7 |
+| Design §1 | Destination cleared (weather resets to idle) | Step 10, Edge N |
 
 ## 5. Main User Journey
 
@@ -54,6 +56,7 @@
 7. Re-selecting a route that already has segments reuses them instantly (no re-fetch) — segments, legend, and time badges render from stored data (R7, R10).
 8. Rider dismisses the sheet → the map keeps the colored route + legend; the route-summary pill behaves as in trip-planner (unchanged).
 9. Rider taps "Check Route" again → the sheet dismisses first, then `checkRoute()` cancels any in-flight task and re-runs routing + weather for the selected route. Changing origin/stop/destination/departure instead calls `plan()`, which re-routes only: it cancels the weather task and resets the forecast to idle (`weatherState = .idle`) — badges and legend time clear until the rider taps Check Route again (R7, R10).
+10. Clearing the destination (route-summary pill X or destination-row X — trip-planner R17/R18) resets `weatherState` to `.idle`: the colored segments, legend, time badges, and any offline banner clear with the destination-only reset, and the map returns to the empty search state (weather spec §5, design §1).
 
 ## 6. Edge Cases
 
@@ -70,6 +73,7 @@
 - **K. More than 3 wet stretches:** the FIRST 3 by route order (most imminent) get badges; the legend time line shows the 3 times + "+N more" (e.g. "Rain at 2:40 PM · 3:05 PM · 3:30 PM +2 more"); the VO label appends "N more wet stretches." Overlap between nearby badges is accepted — no distance filter (R10).
 - **L. Departure change:** `setDepartureDate` → `plan()` → `weatherState = .idle` clears badges + legend time until the next Check Route recomputes — no re-scoring without re-fetch (full departure-time re-scoring is Phase 4) (R10).
 - **M. Cached re-select:** re-selecting a route with stored segments renders its badges instantly from stored data (`.loaded`) — same cached data as the colored segments, no re-fetch (R7, R10).
+- **N. Destination cleared:** clearing the destination (trip-planner R17/R18) resets `weatherState` to `.idle`; colored segments, legend, time badges, and the offline banner all clear with the destination-only reset — no weather fetch runs (Spec §5).
 
 ## 7. Flow Diagram
 
@@ -98,4 +102,6 @@ flowchart TD
   N -->|"origin / stop / destination / departure · re-route only · weatherState = .idle"| P["Routing succeeds · no weather · no overlay · badges + time line cleared · edge L"]
   P -->|"next Check Route tap"| A
   N -->|"no"| O["Rider dismisses sheet · colored route + legend stay on map"]
+  O --> Q{"Destination cleared? · trip-planner R17/R18"}
+  Q -->|"yes · edge N"| R["weatherState = .idle · segments + legend + time badges + banner clear · empty search state"]
 ```

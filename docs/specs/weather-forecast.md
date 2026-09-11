@@ -79,6 +79,7 @@ erDiagram
 - **Weather failure:** catch the error, keep the route and plan, set `weatherState = .unavailable` → banner. Never fail the plan.
 - **Re-selection:** selecting another route card NEVER fetches — a route with cached segments reuses them (weatherState `.loaded`, instant, badges + legend time included); a route without segments shows no forecast (weatherState `.idle`) until the rider taps Check Route. An in-flight fetch from a prior Check Route continues and its results attach only to the route it was requested for — never to a newly selected route.
 - **Re-plan:** an automatic re-route (destination/origin/stop/departure change) cancels the in-flight weather task, resets the weather state to idle, and re-runs routing only — no forecast until the rider taps Check Route again.
+- **Destination clear:** clearing the destination (trip-planner R17/R18) resets `weatherState` to `.idle` and removes all rain overlays, the legend, and the time badges with the rest of the destination-only reset.
 - **Trigger:** weather is fetched ONLY by `checkRoute()` (the Check Route tap); re-selecting a route never fetches.
 
 ## 6. Constraints

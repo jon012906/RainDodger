@@ -58,6 +58,10 @@ final class TripPlannerViewModel {
         weatherState == .unavailable
     }
 
+    var isOriginCurrentLocation: Bool {
+        origin?.name == currentLocationName
+    }
+
     private var selectedAlternativeIndex: Int? {
         guard let selectedRouteID, let plan = routePlan else { return nil }
         return plan.alternatives.firstIndex(where: { $0.id == selectedRouteID })
@@ -184,13 +188,10 @@ final class TripPlannerViewModel {
         }
     }
 
-    func clear() {
+    func clearDestination() {
         cancelPlan()
-        origin = nil
         destination = nil
-        stop = nil
         selectedRouteID = nil
-        departureDate = nil
         routePlan = nil
         state = .idle
         weatherState = .idle

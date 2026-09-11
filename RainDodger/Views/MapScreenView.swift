@@ -59,9 +59,13 @@ struct MapScreenView: View {
                         )
                     }
                     if shouldShowRoutePill {
-                        RouteSummaryPill(viewModel: tripPlanner) {
-                            viewModel.isTripSheetPresented = true
-                        }
+                        RouteSummaryPill(
+                            viewModel: tripPlanner,
+                            onTap: {
+                                viewModel.isTripSheetPresented = true
+                            },
+                            onClear: clearDestination
+                        )
                     } else {
                         DestinationSearchField(onTap: viewModel.searchFieldTapped)
                     }
@@ -94,7 +98,8 @@ struct MapScreenView: View {
                 TripPlannerSheet(
                     viewModel: tripPlanner,
                     searchService: searchService,
-                    searchCoordinate: viewModel.currentCoordinate
+                    searchCoordinate: viewModel.currentCoordinate,
+                    onClearDestination: clearDestination
                 )
                 .presentationDragIndicator(.visible)
             }
@@ -110,8 +115,12 @@ struct MapScreenView: View {
             guard let intent else { return }
             switch intent {
             case .recenter, .resetNorthAndRecenter:
-                withAnimation {
+                if reduceMotion {
                     cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                } else {
+                    withAnimation {
+                        cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                    }
                 }
             case .focusDestination(let coordinate):
                 withAnimation {
@@ -317,8 +326,10 @@ struct MapScreenView: View {
 
     private func selectDestination(_ result: SearchResult) {
         viewModel.selectDestination(result)
-        if let coordinate = viewModel.currentCoordinate {
-            tripPlanner.setOriginFromCurrentLocation(coordinate)
+        if tripPlanner.origin == nil || tripPlanner.isOriginCurrentLocation {
+            if let coordinate = viewModel.currentCoordinate {
+                tripPlanner.setOriginFromCurrentLocation(coordinate)
+            }
         }
         tripPlanner.updateDestination(
             RouteWaypoint(
@@ -328,6 +339,17 @@ struct MapScreenView: View {
                 categorySymbol: result.categorySymbol
             )
         )
+    }
+
+    private func clearDestination() {
+        tripPlanner.clearDestination()
+        viewModel.clearDestination()
+        rainOverlays = []
+        viewModel.isTripSheetPresented = false
+        viewModel.recenter()
+        Task { @MainActor in
+            UIAccessibility.post(notification: .announcement, argument: "Destination cleared")
+        }
     }
 
     private func isCurrentLocation(_ waypoint: RouteWaypoint) -> Bool {

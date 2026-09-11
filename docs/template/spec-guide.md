@@ -140,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `feat/rain-time-markers` |
-| Feature folders (files this branch owns/adds) | `docs/specs/weather-forecast.md` · `docs/designs/weather-forecast.md` · `docs/flows/weather-forecast.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
-| Models | `RainDodger/Models/RoutePlan.swift` (modified — `RainSegment.arrivalDate` + `WetStretch` value type + `RainMetrics.wetStretches(for:)`) |
+| Branch | `fix/clear-destination` |
+| Feature folders (files this branch owns/adds) | `docs/specs/trip-planner.md` · `docs/designs/trip-planner.md` · `docs/flows/trip-planner.md` · `docs/specs/maps-screen.md` · `docs/designs/maps-screen.md` · `docs/flows/maps-screen.md` · `docs/specs/weather-forecast.md` · `docs/designs/weather-forecast.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Models | — (no changes this branch) |
 | Services | — (no changes this branch) |
-| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` (modified — wet-stretch derivation + stretch arrival times; departure/route change clears badges + legend time via the existing `weatherState = .idle` reset) |
-| Views | `RainDodger/Views/MapScreenView.swift` (modified — private `RainTimeBadge` per wet stretch, below the route line) · `RainDodger/Views/RainLegend.swift` (modified — legend time line input + extended VO label) |
+| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` · `RainDodger/ViewModels/MapViewModel.swift` (modified — clear-destination reset: `destination`/`routePlan`/`selectedRouteID` → nil, `state`/`weatherState` → `.idle`, cancel in-flight plan/weather tasks, `selectedDestination` → nil) |
+| Views | `RainDodger/Views/RouteSummaryPill.swift` · `RainDodger/Views/TripPlannerSheet.swift` · `RainDodger/Views/MapScreenView.swift` (modified — trailing clear X on the pill and the destination row, ≥ 44 pt, return to the empty search state; no new files, pbxproj untouched) |
 | Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 

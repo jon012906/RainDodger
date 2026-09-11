@@ -10,6 +10,7 @@ The feature is a single main screen with these states:
 - **Permission requested (system):** native iOS when-in-use prompt appears over the map; app shows the map beneath it.
 - **Denied:** in-app overlay on the map — explanatory text ("Rain Dodger needs your location to recenter the map") + Open Settings button.
 - **Loaded:** full-screen map, blue user dot, bottom search capsule, bottom-trailing recenter button drawn above the bottom bar (compass out of scope this branch).
+- **Cleared/empty:** after a destination clear from the route-summary pill X (trip-planner R17) or the trip planner destination-row X (trip-planner R18), the map returns to the empty/search state — `DestinationSearchField` ("Your Destination…") visible, no destination pin, no route polyline, no rain overlays/legend/badges; the camera returns to the rider's location. Origin/stop/departure stay retained in the trip planner for the next pick.
 - **Search entry:** tapping the search capsule opens the destination search page (see `docs/designs/search.md`).
 
 Offline/error of map tiles is handled by MapKit's standard behavior — no custom error state this branch.
@@ -19,6 +20,7 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 - **Map:** full-screen edge-to-edge, standard gestures (pan/zoom/pinch), standard MapKit style. `Map` (iOS 26 SwiftUI).
 - **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → opens the search page.
 - **Control stack:** the recenter button floats bottom-trailing, above the map and drawn ON TOP of / above the bottom bar (the search field when no route is planned, or the route-summary pill when the trip sheet is dismissed) — never behind or underneath it. It sits ~80 pt above the bottom safe-area inset in portrait, and ~76 pt above the inset in landscape (where the bar is full-width), so it clears the bar in both orientations. White circle with a dark location arrow; 44 pt+.
+- **Route-summary pill X:** when the trip sheet is dismissed and the pill is shown, the pill carries a trailing X (≥ 44 pt, `Color.primary` glyph on the solid pill backing) that clears the destination and returns the map to the cleared/empty state (trip-planner R17). The X is a separate target from the pill body — tapping it never reopens the sheet.
 - **Compass:** **out of scope this branch** — `CompassControl` stays commented out in `MapScreenView` and is not rendered. When re-enabled: always visible; dial rotates with device heading so the cardinal letter for the current heading sits at the top marker (N → E → S → W); tap → north-up + recenter.
 - **Blue dot:** centered on the user's location via `UserAnnotation` (no cone this branch).
 - **Denied overlay:** full-map coverage with dark translucent scrim + solid card: heading, explanation, Open Settings button.
@@ -58,6 +60,7 @@ Per `.opencode/rules/004-accessibility.md`:
   - Search capsule: **"Your destination field"** (hint: "Double tap to search", placeholder announces "Your Destination…").
   - Compass: **"Compass"** (value: current cardinal + degrees, e.g. "North, 0 degrees"; hint: "Double tap to reset to north and recenter").
   - Recenter: **"Recenter to my location"**.
+  - Route-summary pill X (when the pill is shown): **"Clear destination"** (hint: "Double tap to clear the destination and return to search"); clearing announces **"Destination cleared"** once.
 - All interactive targets ≥ 44 × 44 pt; capsule component and control stack use system spacing plus generous padding.
 - Dynamic Type: "Your Destination…" uses `.title3`-scale system text that scales; capsule height grows with text size.
 - Reduce Motion: compass dial static (no rotation animation); map camera recenter still animates only for distance (compass tap uses default camera; see §6).
@@ -69,4 +72,5 @@ Per `.opencode/rules/004-accessibility.md`:
 - **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change.
 - **Reduce Motion:** dial repositions instantly, no animation; the search page uses the system sheet transition.
 - **Recenter:** default SwiftUI `Map` camera move (no custom animation); no follow-heading mode.
+- **Clear destination:** on a clear the camera returns to the rider's location (default system camera move); **Reduce Motion** → instant recenter, no animation. No custom transition on the pin/route/rain overlays being removed, and no haptics.
 - **No haptics required this branch** (deferred — no ride start, no warnings yet).

@@ -26,7 +26,7 @@
 | R6 | Route cards ETA + distance, selectable | Steps 6–7 |
 | R7 | Selected route highlighted, camera fit | Step 7 |
 | R8 | Re-route + refit on origin/stop/destination/departure change | Steps 8–11, 14–15, edges F–H, L–N |
-| R9 | Edge cases A–Q | Edge cases A–Q |
+| R9 | Edge cases A–W | Edge cases A–W |
 | R10 | MVVM `DirectionsService` + `TripPlannerViewModel` | Steps 3–9 |
 | R11 | Accessibility | Steps 2–14 |
 | R12 | Docs updated | This doc |
@@ -34,6 +34,8 @@
 | R14 | Map badges (destination ETA pill + "X min Fastest" route badge) | Steps 7, 12, edge O |
 | R15 | Leave-at picker (graphical calendar + Time pill/wheel + Leave Now, draft-commit) | Steps 8, 14, edges L–M, Q |
 | R16 | Check Route dismisses the sheet first, then `checkRoute()` (idempotent / Retry); failure re-presents the sheet | Steps 9, 14, edges D, N |
+| R17 | Clear from the route-summary pill X (immediate, no confirmation) → empty search state, destination-only reset | Steps 16–17, edges R–W |
+| R18 | Clear from the destination-row X (clears + dismisses the sheet) → same empty map state | Step 18, edges R–W |
 
 ## 4. Design Coverage
 
@@ -43,10 +45,12 @@
 | Design §1 | Loaded | Steps 4–7 |
 | Design §1 | Leave-at picker | Steps 8–9, edge Q |
 | Design §1 | Sheet dismissed — map + pill | Steps 12–13 |
+| Design §1 | Sheet dismissed — cleared/empty | Steps 16–18 |
 | Design §1 | Failed | Edge case D |
 | Design §1 | Origin unset | Edge case A |
 | Design §2 | Half-modal layout | Steps 2–7 |
-| Design §2 | Route-summary pill layout (long pill + grabber) | Steps 12–14 |
+| Design §2 | Route-summary pill layout (long pill + grabber + clear X) | Steps 12–14, 16 |
+| Design §2 | Destination-row clear X (only when a destination is set) | Step 18 |
 | Design §2 | Route details row below the cards | Step 7 |
 | Design §3 | TripPlannerSheet / DepartureTimePickerSheet / RouteCard / RouteSummaryPill / RouteDetailsRow / reused SearchPage | Steps 2–15 |
 | Design §3 | MapBadgeDestinationETA / MapBadgeFastest | Steps 7, 12 |
@@ -66,10 +70,13 @@
 9. Optional: rider taps "Check Route" → the trip sheet dismisses first, then `checkRoute()` re-runs (idempotent refresh / Retry); while a request is in flight it cancels + restarts; on routing failure while dismissed, the map re-presents the trip sheet so the error + Retry stay reachable (R16, edges D, N).
 10. Rider edits the origin via "where from?" mode → re-route + refit (R2, R8).
 11. Rider adds/removes the stop → re-route + refit (R4, R8).
-12. Rider drags the sheet down to dismiss it (drag indicator only, no close button) → the map stays exactly as-is (alternatives drawn, selection, pins, camera, badges) and the long route-summary pill (grabber) floats bottom-center showing the selected route's "X min · Y km" (R1, R13, R14).
+12. Rider drags the sheet down to dismiss it (no generic close button; the destination-row X is the other dismiss path and also clears the destination — R18) → the map stays exactly as-is (alternatives drawn, selection, pins, camera, badges) and the long route-summary pill (grabber) floats bottom-center showing the selected route's "X min · Y km" (R1, R13, R14).
 13. Rider focuses and pans the map with the road path unobstructed; the pill stays put (R13).
 14. Rider taps the pill OR drags it up (upward translation ≥ 40 pt) → the half-sheet reopens with all state preserved (origin, destination, stop, selected route, alternatives, departure time) and nothing re-runs; editing origin/stop/destination, changing departure, or tapping Check Route behaves as in steps 4–11 (R1, R13, R8, R15, R16).
 15. Rider edits the destination from inside the sheet → `SearchPage` opens in destination mode; picking a new destination calls `updateDestination` (re-plans the route) and saves the pick to recents via `SearchContext.destination.savesRecents` (R3, R8).
+16. Rider taps the route-summary pill's trailing X (sheet dismissed) → the destination clears immediately, with no confirmation: the destination pin, route alternatives/selection, and rain overlays/legend/badges are removed; `routePlan`/`selectedRouteID` clear and `state` + `weatherState` reset to `.idle`; in-flight plan/weather tasks are cancelled; `MapViewModel.selectedDestination` is cleared. The map returns to the empty search state with the `DestinationSearchField` ("Your Destination…") visible and the camera back at the rider's location (R17, R18; edges R–W).
+17. Origin, stop, and departure time are retained after a clear; picking a new destination afterwards plans normally with those retained values — a custom origin is preserved (the map search refreshes origin only when it is unset or still the auto "Current location") (R17, R18, edge V).
+18. Rider taps the destination row's trailing X inside the sheet → the same reset as step 16 plus the sheet dismisses to the empty map (R18).
 
 ## 6. Edge Cases
 
@@ -90,6 +97,12 @@
 - **N. Check Route while loading:** a routing request is in flight and the rider taps "Check Route" → the sheet dismisses first, then `checkRoute()` cancels the in-flight request and restarts (never a no-op duplicate), per R16. The same cancel+restart applies to origin/stop/destination/departure changes (R8, R15, R16).
 - **O. Map badges with one alternative only (no stop):** the badges still show — the white destination ETA pill + blue "X min Fastest" route badge render even when there is exactly one alternative/combined route (R14).
 - **P. Decorative handle tap:** tapping a hamburger (≡) drag-handle on any trip row does nothing (no reorder, no re-route) — decorative only, `.accessibilityHidden(true)` (R2–R4).
+- **R. Clear while routing is loading:** rider taps either clear X while an MKDirections request is in flight → the in-flight plan task is cancelled, `state` resets to `.idle`, and the empty search state shows; the late request result is discarded and never re-draws a route (R17, R18).
+- **S. Clear while weather is loading (accepted limitation):** while the blocking "Checking rain along your route…" overlay is up, it sits above the route-summary pill, so the pill's X is unreachable until the fetch ends (and the destination-row X is unreachable while the sheet is dismissed). Once the fetch completes (or fails) the overlay clears and clearing works; a clear during/after the fetch cancels the weather task and resets `weatherState` to `.idle`, removing any overlays/legend/badges (R17, R18).
+- **T. Clear while the sheet is open:** the pill is hidden while the sheet is open, so only the destination-row X is available; tapping it clears the destination and dismisses the sheet to the empty map (R18).
+- **U. Double-tap / rapid taps on clear:** the clear action is idempotent — a second tap lands on already-cleared state (destination already nil, state already `.idle`) and is a no-op; no duplicate cancellation, no crash, no re-route (R17, R18).
+- **V. Retained origin/stop/departure after clear:** clearing keeps origin, stop, and `departureDate`; the next destination pick plans with them, so a custom origin survives and the map search refreshes origin only when it is unset or still the auto "Current location" (R17, R18).
+- **W. Clear from the failed state:** if routing failed, the pill is hidden but the sheet is re-presented; the destination-row X still clears the destination, dismisses the sheet, and returns to the empty search state (R18).
 
 ## 7. Flow Diagram
 
@@ -131,11 +144,17 @@ flowchart TD
   L2 -->|"0 · edge D"| K
   L2 -->|"1..3 · edge E"| L3["Route cards + badges update · R6·R14"]
   L3 --> L4["Route details row below cards · entry to step view · route-detail R1"]
-  L4 --> S
+  L4 --> CL4{"Taps the destination-row clear X? · R18"}
+  CL4 -->|"yes · R18"| CL2["Clear destination: cancel plan/weather · reset idle · drop pin/route/rain overlays · clear selectedDestination · R17·R18"]
+  CL4 -->|"no"| S
   S -->|"no"| P{"Origin · stop · destination · departure changed? · R8·R15"}
   S -->|"yes"| T["Sheet dismissed · map unchanged (routes · pins · camera · badges) · R1"]
   T --> U["Long route-summary pill (grabber): X min · Y km · Calculating… while loading · edge J · R13"]
-  U --> V["Rider focuses / pans the map · R13"]
+  U --> CL1{"Taps the pill clear X? · R17"}
+  CL1 -->|"yes · R17"| CL2
+  CL1 -->|"no"| V["Rider focuses / pans the map · R13"]
+  CL2 --> CL3["Empty search state: DestinationSearchField · camera back to rider · retain origin/stop/departure · R17·R18"]
+  CL3 --> A["Search page: rider picks destination · R1"]
   V --> W{"Taps pill or drags it up (≥ 40 pt)? · R13"}
   W -->|"no"| V
   W -->|"yes"| X["Sheet reopens · origin · destination · stop · selection · departure preserved · R13"]

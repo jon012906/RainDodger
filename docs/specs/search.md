@@ -74,7 +74,7 @@ erDiagram
 ## 7. Acceptance Criteria
 
 - [ ] `docs/specs/search.md`, `docs/designs/search.md`, `docs/flows/search.md` exist per templates and pass design-review
-- [ ] `docs/template/spec-guide.md` §9 shows `feat/search-feature` with Models/Services/ViewModels/Views for the search feature
+- [ ] `docs/template/spec-guide.md` §9 showed `feat/search-feature` with Models/Services/ViewModels/Views for the search feature at the time of that branch (historical — §9 is rewritten on every branch switch; current value `fix/clear-destination`)
 - [ ] `SearchPage` opens as a modal sheet from the maps search capsule; field pinned at top and auto-focused with magnifier, placeholder, decorative mic, in-field clear X (only when text present), trailing close button dismisses the sheet
 - [ ] Live MapKit search while typing (debounced ~350 ms); rows show circular category icon + bold name + secondary-gray street
 - [ ] "Recent" header shown only when recents exist; hidden when none

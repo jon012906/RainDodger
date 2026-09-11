@@ -25,6 +25,7 @@
 | R5 | Search bar (opens search page) | Step 11 |
 | R7 | Permission states | Steps 1–3, Edge case A |
 | R8 | Accessibility (44 pt, VoiceOver, Dynamic Type, Reduce Motion) | Step 11 (announcement); controls on all steps |
+| R9 | Clear restores the empty/search map (pill X / destination-row X) | Step 12, Edge case E |
 
 ## 4. Design Coverage
 
@@ -35,6 +36,7 @@
 | Design §1 | Loaded | Step 3 |
 | Design §1 | Denied | Edge case A |
 | Design §1 | Search page entry | Step 11 |
+| Design §1 | Cleared/empty | Step 12, Edge case E |
 | Design §2 | Layout (capsule, control stack, compass) | Steps 3, 6–12 |
 | Design §6 | Motion (dial, Reduce Motion) | Steps 6–12 |
 
@@ -51,6 +53,7 @@
 9. Rider taps compass → map resets to north-up + recenters to user location (R4, R3).
 10. Screen disappears → heading updates stop (R4).
 11. Rider taps the search capsule → destination search page opens (R5, R8).
+12. After a destination is cleared from the route-summary pill X or the trip planner destination-row X (trip-planner R17/R18), the map returns to the empty/search state: `DestinationSearchField` ("Your Destination…") visible, no destination pin/route/rain overlays, camera at the rider's location (R9).
 
 ## 6. Edge Cases
 
@@ -58,6 +61,7 @@
 - **B. No heading data yet:** map loads with dot; compass shows the dial upright (N at the top marker) until the first heading sample (R4).
 - **C. Heading sample outlier (≥ 180° jump):** sample dropped, dial keeps last value (R4).
 - **D. Search tap while denied:** still opens the search page — no new prompt (R5).
+- **E. Clear from the route-summary pill (or the trip planner destination row):** tapping the pill's X clears the destination immediately, with no confirmation, and returns the map to the cleared/empty state — `DestinationSearchField` visible, no pin/route/rain overlays, camera at the rider's location; the reset scope and retained trip values live in `docs/specs/trip-planner.md` §5 (R9; trip-planner R17/R18). While weather is loading the blocking overlay covers the pill, so the pill X is unreachable until the fetch ends (accepted limitation).
 
 ## 7. Flow Diagram
 
@@ -80,6 +84,10 @@ flowchart TD
   N --> O
   O -->|"tap"| P["Destination search page opens · R5·R8"]
   P --> Q["Rider selects a destination · back to map with pin"]
-  Q --> H
+  Q --> QD["Trip planner auto-opens · rider dismisses the sheet (drag down) · route-summary pill shown"]
+  QD --> CLR{"Taps the route-summary pill X? · R9"}
+  CLR -->|"yes · R9"| CLS["Cleared/empty map: DestinationSearchField · no pin/route/rain overlays · camera at rider · R9"]
+  CLS --> O
+  CLR -->|"no"| H
   F --> R["Screen disappears · heading updates stop · R4"]
 ```

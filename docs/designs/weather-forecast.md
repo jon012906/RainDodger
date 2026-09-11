@@ -10,6 +10,7 @@ Reference screenshot (Apple Maps rain overlay, iOS): the route is drawn over the
 - **Re-selected route:** selecting another route card NEVER auto-fetches — a route with cached segments reuses them instantly (legend + colored segments + time badges stay); a route without segments shows no forecast (plain route-blue, legend hidden) until the rider taps Check Route.
 - **Re-plan / Retry:** tapping Check Route again cancels the weather task, re-runs routing, and repeats loading → loaded (or the offline banner).
 - **Departure change:** `setDepartureDate` re-plans via `plan()` (routing only) — the weather state resets to idle, so the time badges and legend time line clear until the rider taps Check Route again (no re-scoring without re-fetch).
+- **Destination cleared:** clearing the destination (trip-planner R17/R18) resets the weather state to idle — the colored segments, legend, offline banner, and time badges all clear with the destination-only reset; the map returns to the empty search state.
 
 ## 2. Layout
 

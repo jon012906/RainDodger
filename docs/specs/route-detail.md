@@ -109,7 +109,7 @@ erDiagram
 ## 7. Acceptance Criteria
 
 - [ ] `docs/specs/route-detail.md`, `docs/designs/route-detail.md`, `docs/flows/route-detail.md` exist per templates and pass design-review
-- [ ] `docs/template/spec-guide.md` §9 shows `fix/ui-enhancements` with the route-detail Models/Services/ViewModels/Views
+- [ ] `docs/template/spec-guide.md` §9 showed `fix/ui-enhancements` with the route-detail Models/Services/ViewModels/Views at the time of that branch (historical — §9 is rewritten on every branch switch; current value `fix/clear-destination`)
 - [ ] The **"Route details" row** (below the route cards) is the primary entry — it expands the **same** planner sheet `.medium` → `.large` into a step list (no nested sheet); re-tapping the already-selected card stays a shortcut; tapping a different card only selects it
 - [ ] Back control returns to the route cards (detent `.medium`) with origin/destination/stop/selection/departure preserved
 - [ ] Step list: turn icon + instruction text + distance per step, in route order, ≥ 44 pt

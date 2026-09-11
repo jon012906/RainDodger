@@ -12,6 +12,7 @@ struct TripPlannerSheet: View {
     let viewModel: TripPlannerViewModel
     let searchService: DestinationSearchService
     let searchCoordinate: CLLocationCoordinate2D?
+    let onClearDestination: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
@@ -24,11 +25,13 @@ struct TripPlannerSheet: View {
     init(
         viewModel: TripPlannerViewModel,
         searchService: DestinationSearchService,
-        searchCoordinate: CLLocationCoordinate2D?
+        searchCoordinate: CLLocationCoordinate2D?,
+        onClearDestination: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.searchService = searchService
         self.searchCoordinate = searchCoordinate
+        self.onClearDestination = onClearDestination
         _searchViewModel = State(initialValue: SearchViewModel(searchService: searchService))
     }
 
@@ -165,6 +168,18 @@ struct TripPlannerSheet: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Destination, \(destinationValue)")
             .accessibilityHint("Double tap to change destination")
+            if viewModel.destination != nil {
+                Button(action: onClearDestination) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.primary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear destination")
+                .accessibilityHint("Double tap to clear the destination and close the planner")
+            }
             dragHandle
         }
     }
@@ -449,7 +464,8 @@ struct TripPlannerSheet: View {
             weatherService: MockWeatherService()
         ),
         searchService: MockDestinationSearchService(),
-        searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010)
+        searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010),
+        onClearDestination: {}
     )
     .presentationDragIndicator(.visible)
 }
