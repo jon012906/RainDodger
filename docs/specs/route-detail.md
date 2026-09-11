@@ -15,12 +15,12 @@ Once a route is planned and selected in the trip planner, tapping the **already-
 
 | ID | Requirement | Priority | Notes |
 |---|---|---|---|
-| R1 | Re-tapping the already-selected route card expands the **same** planner sheet from `.medium` to `.large` and shows the step list — **not** a nested second sheet; a back control returns to the route cards; origin/destination/stop/selection/departure are preserved | P0 | Tapping a **different** card keeps today's select behavior (no expansion); expansion is sheet-local UI state |
+| R1 | An explicit **"Route details" row in the planner sheet (below the route cards)** is the primary, discoverable entry to the step view: it expands the **same** planner sheet from `.medium` to `.large` and shows the step list — **not** a nested second sheet; re-tapping the already-selected route card remains a shortcut to the same view; a back control returns to the route cards; origin/destination/stop/selection/departure are preserved | P0 | Tapping a **different** card keeps today's select behavior (no expansion); expansion is sheet-local UI state; the Details row shows when `state == .loaded` and a route is selected |
 | R2 | Step list for the selected route: one row per step with turn-type icon + instruction text + distance, in route order (first = depart, last = arrive) | P0 | Each row ≥ 44 pt |
 | R3 | `RouteTurnType` enum (`depart` / `straight` / `turnLeft` / `turnRight` / `slightLeft` / `slightRight` / `keepLeft` / `keepRight` / `merge` / `roundabout` / `uTurn` / `arrive` / `other`) derived by a deterministic **English instruction parser** over `MKRoute.Step.instructions` | P0 | Ordered matching; first match wins (see §5) |
 | R4 | Rain marks: only **wet** steps (representative `rainChance ≥ 0.50`) show a rain icon + %; dry steps show neither; with no forecast, no step shows a mark | P0 | Representative chance = max `rainChance` of the `rainSegments` samples inside the step's distance range (see §5) |
 | R5 | Header wet-distance summary reuses the **shared wet-distance helper** (identical to the map legend): "Rain on X km of Y km" | P0 | `RainMetrics.wetDistance(for:)`; X/Y formatted exactly like the legend |
-| R6 | No forecast yet → steps shown **without** marks + a "Check route for rain" button that calls the existing `checkRoute()`; while the forecast is computing the header shows a "checking rain" state; no silent auto-fetch | P0 | Explicit-check weather policy unchanged; expanding the sheet never fetches weather |
+| R6 | No forecast yet → steps shown **without** marks + a "Check route for rain" button that dismisses the planner sheet and then calls the existing `checkRoute()` (same dismiss-then-check behavior as the main Check Route; on routing failure while dismissed the map re-presents the sheet); while the forecast is computing the map shows the blocking overlay; no silent auto-fetch | P0 | Explicit-check weather policy unchanged; expanding the sheet / opening the step view never fetches weather |
 | R7 | Weather unavailable → a "Live rain unavailable" note in the header; steps still shown without marks; plan not failed; no crash | P0 | Mirrors the map-level unavailable banner |
 | R8 | Routes with a stop (stitched two-leg routes): both legs' steps are concatenated into one ordered list with **continuous cumulative distances** | P0 | Intermediate leg boundary steps are kept in order |
 | R9 | Distance alignment: each step's cumulative `distanceFromStart` is scaled so the last step ends exactly at the route's `distance`; the rain→step mapping uses this common distance space | P0 | Nearest-sample fallback when a step range contains no 5 km sample |
@@ -66,7 +66,7 @@ erDiagram
 
 ## 5. Rules / Logic
 
-- **Expansion (re-tap):** the route card already exposes `onTap`; the sheet distinguishes select vs. expand: tapping a **non-selected** card selects it (unchanged); tapping the **already-selected** card switches the sheet content from route cards to the step list and moves the sheet detent from `.medium` to `.large` (same sheet, no nested presentation). The step list renders the currently selected alternative.
+- **Expansion (Details row / re-tap):** the **"Route details" row** below the route cards is the primary entry; the route card's existing `onTap` lets the sheet distinguish select vs. expand: tapping a **non-selected** card selects it (unchanged); the Details row — or tapping the **already-selected** card (shortcut) — switches the sheet content from route cards to the step list and moves the sheet detent from `.medium` to `.large` (same sheet, no nested presentation). The step list renders the currently selected alternative; the Details row shows only when `state == .loaded` and a route is selected.
 - **Back control:** the step view's back button returns to the route cards and collapses the sheet detent to `.medium`; origin/destination/stop/selected route/departure are untouched (no re-route, no re-fetch).
 - **Instruction parser (ordered, case-insensitive, first match wins):**
   1. trimmed instructions empty → `other`
@@ -88,12 +88,12 @@ erDiagram
 - **Rain→step mapping:** for each step, range `[distanceFromStart, next step's distanceFromStart)` (the last step ends at `route.distance`). Representative chance = **max** `rainChance` of the `rainSegments` whose `distanceFromStart` falls in that range. If a range contains no sample (short steps vs. 5 km sampling), fall back to the **nearest sample** by `distanceFromStart` to the step's midpoint, so no step is silently unmarked. If `rainSegments` is empty, there is no forecast and no step shows a mark.
 - **Wet step:** representative `rainChance ≥ 0.50` → show `cloud.rain.fill` + `Int((chance × 100).rounded())` %. Below 0.50 → show neither (dry). This is the same ≥ 50% concept the map legend uses.
 - **Header wet-distance summary:** `RainMetrics.wetDistance(for: selectedAlternative)` rendered as "Rain on X km of Y km" with `X = Int((wet/1000).rounded())`, `Y = Int((total/1000).rounded())` — byte-identical formatting to the map legend, so the two can never disagree. Shown only when a forecast is loaded and `rainSegments` is non-empty.
-- **No forecast (idle / empty segments):** steps render without marks; the header area shows a "Check route for rain" button (full-width, ≥ 44 pt) that calls the existing `checkRoute()`. Expanding the sheet **never** triggers a fetch — weather is explicit-check only.
-- **Checking rain:** while `weatherState == .loading`, the header shows "Checking rain along your route…" and step marks are withheld; when the forecast attaches, marks + the summary appear. If the fetch fails, the header switches to the unavailable note.
+- **No forecast (idle / empty segments):** steps render without marks; the header area shows a "Check route for rain" button (full-width, ≥ 44 pt) that dismisses the trip sheet and then calls the existing `checkRoute()` — same dismiss-then-check behavior as the main Check Route, and a routing failure while dismissed re-presents the sheet. Expanding the sheet / opening the step view **never** triggers a fetch — weather is explicit-check only.
+- **Checking rain:** because "Check route for rain" (like the main Check Route) dismisses the sheet first, the rider sees the map-level blocking overlay ("Checking rain along your route…" over the map and the pill) while `weatherState == .loading`; step marks are withheld. When the forecast attaches, reopening the step view shows marks + the summary. If the fetch fails, the header switches to the unavailable note.
 - **Weather unavailable:** `weatherState == .unavailable` → header note "Live rain unavailable"; steps shown without marks; no summary and no "Check route for rain" button (the rider can go back and use the existing Check Route).
 - **Empty steps:** if the selected alternative has no steps, the step view shows "Turn-by-turn directions unavailable for this route" plus the back control.
 - **State preservation:** expanding, going back, and the sheet's own drag-dismissal never mutate trip state; dismissing the sheet resets the expansion (reopening shows the route cards) while origin/destination/stop/selection/departure remain intact.
-- **No silent auto-fetch:** weather is only fetched by `checkRoute()` or by `selectRoute(_:)` for a route without cached segments (existing behavior); the route-detail step view adds no new fetch trigger.
+- **No silent auto-fetch:** weather is fetched ONLY by `checkRoute()` (the main Check Route or the step view's "Check route for rain"); re-selecting a route never fetches — cached segments are reused, uncached routes show no forecast until an explicit check; the route-detail step view adds no new fetch trigger.
 
 ## 6. Constraints
 
@@ -109,14 +109,14 @@ erDiagram
 ## 7. Acceptance Criteria
 
 - [ ] `docs/specs/route-detail.md`, `docs/designs/route-detail.md`, `docs/flows/route-detail.md` exist per templates and pass design-review
-- [ ] `docs/template/spec-guide.md` §9 shows `feat/route-detail` with the route-detail Models/Services/ViewModels/Views
-- [ ] Re-tapping the already-selected route card expands the **same** planner sheet `.medium` → `.large` into a step list (no nested sheet); tapping a different card only selects it
+- [ ] `docs/template/spec-guide.md` §9 showed `fix/ui-enhancements` with the route-detail Models/Services/ViewModels/Views at the time of that branch (historical — §9 is rewritten on every branch switch; current value `fix/clear-destination`)
+- [ ] The **"Route details" row** (below the route cards) is the primary entry — it expands the **same** planner sheet `.medium` → `.large` into a step list (no nested sheet); re-tapping the already-selected card stays a shortcut; tapping a different card only selects it
 - [ ] Back control returns to the route cards (detent `.medium`) with origin/destination/stop/selection/departure preserved
 - [ ] Step list: turn icon + instruction text + distance per step, in route order, ≥ 44 pt
 - [ ] `RouteTurnType` parser follows the ordered rules in §5 (English) and maps to all 13 cases; no comments
 - [ ] Only wet steps (representative chance ≥ 50%, max sample in the step's range) show a rain icon + %; dry steps show neither
 - [ ] Header shows "Rain on X km of Y km" using `RainMetrics.wetDistance(for:)` — identical to the map legend (R5)
-- [ ] No forecast → steps without marks + "Check route for rain" button calling `checkRoute()`; checking state shown; no silent auto-fetch
+- [ ] No forecast → steps without marks + "Check route for rain" button that dismisses the sheet then calls `checkRoute()` (same as the main Check Route; failure re-presents the sheet); map-level checking overlay shown; no silent auto-fetch
 - [ ] Weather unavailable → "Live rain unavailable" note in the header; steps shown; plan not failed
 - [ ] Routes with a stop concatenate both legs' steps with continuous cumulative distances
 - [ ] Empty steps → "Turn-by-turn directions unavailable for this route" + back control

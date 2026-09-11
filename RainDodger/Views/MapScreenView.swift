@@ -37,17 +37,41 @@ struct MapScreenView: View {
     var body: some View {
         GeometryReader { proxy in
             let isLandscape = proxy.size.width > proxy.size.height
+            let stretches = Self.wetStretches(for: tripPlanner, isFailed: isTripPlanFailed)
             ZStack {
-                map
+                map(stretches: stretches)
 
                 if viewModel.authorizationState == .denied {
                     LocationPermissionOverlay(onOpenSettings: openSettings)
                 }
 
-                weatherStatusOverlay
+                weatherStatusOverlay(stretches: stretches)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding(.top, 12)
                     .padding(.leading, 16)
+            }
+            .overlay(alignment: .bottom) {
+                VStack(spacing: 12) {
+                    if let locationErrorMessage = viewModel.locationErrorMessage {
+                        LocationErrorCard(
+                            message: locationErrorMessage,
+                            onRetry: viewModel.retryLocation
+                        )
+                    }
+                    if shouldShowRoutePill {
+                        RouteSummaryPill(
+                            viewModel: tripPlanner,
+                            onTap: {
+                                viewModel.isTripSheetPresented = true
+                            },
+                            onClear: clearDestination
+                        )
+                    } else {
+                        DestinationSearchField(onTap: viewModel.searchFieldTapped)
+                    }
+                }
+                .padding(.horizontal, isLandscape ? 0 : 16)
+                .padding(.bottom, isLandscape ? 8 : 12)
             }
             .overlay(alignment: .bottomTrailing) {
                 VStack(spacing: 12) {
@@ -59,25 +83,7 @@ struct MapScreenView: View {
                 }
                 .padding(.top, 8)
                 .padding(.trailing, 16)
-            }
-            .overlay(alignment: .bottom) {
-                VStack(spacing: 12) {
-                    if let locationErrorMessage = viewModel.locationErrorMessage {
-                        LocationErrorCard(
-                            message: locationErrorMessage,
-                            onRetry: viewModel.retryLocation
-                        )
-                    }
-                    if shouldShowRoutePill {
-                        RouteSummaryPill(viewModel: tripPlanner) {
-                            viewModel.isTripSheetPresented = true
-                        }
-                    } else {
-                        DestinationSearchField(onTap: viewModel.searchFieldTapped)
-                    }
-                }
-                .padding(.horizontal, isLandscape ? 0 : 16)
-                .padding(.bottom, isLandscape ? 8 : 12)
+                .padding(.bottom, isLandscape ? 76 : 80)
             }
             .overlay {
                 if tripPlanner.isWeatherLoading {
@@ -92,7 +98,8 @@ struct MapScreenView: View {
                 TripPlannerSheet(
                     viewModel: tripPlanner,
                     searchService: searchService,
-                    searchCoordinate: viewModel.currentCoordinate
+                    searchCoordinate: viewModel.currentCoordinate,
+                    onClearDestination: clearDestination
                 )
                 .presentationDragIndicator(.visible)
             }
@@ -108,8 +115,12 @@ struct MapScreenView: View {
             guard let intent else { return }
             switch intent {
             case .recenter, .resetNorthAndRecenter:
-                withAnimation {
+                if reduceMotion {
                     cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                } else {
+                    withAnimation {
+                        cameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+                    }
                 }
             case .focusDestination(let coordinate):
                 withAnimation {
@@ -130,6 +141,11 @@ struct MapScreenView: View {
         .onChange(of: tripPlanner.weatherState) { _, _ in
             refreshRainOverlays()
         }
+        .onChange(of: tripPlanner.state) { _, state in
+            if case .failed = state, !viewModel.isTripSheetPresented {
+                viewModel.isTripSheetPresented = true
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 viewModel.refreshAuthorizationState()
@@ -148,23 +164,32 @@ struct MapScreenView: View {
         return false
     }
 
+    private static func wetStretches(for tripPlanner: TripPlannerViewModel, isFailed: Bool) -> [WetStretch] {
+        guard !isFailed, let plan = tripPlanner.routePlan,
+              let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first
+        else { return [] }
+        return RainMetrics.wetStretches(for: selected)
+    }
+
     @ViewBuilder
-    private var weatherStatusOverlay: some View {
+    private func weatherStatusOverlay(stretches: [WetStretch]) -> some View {
         if let plan = tripPlanner.routePlan,
            !isTripPlanFailed,
            let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
             if tripPlanner.weatherUnavailable {
                 RainUnavailableBanner()
-            } else if !selected.rainSegments.isEmpty {
+            } else if tripPlanner.weatherState == .loaded {
                 RainLegend(
                     wetDistance: RainMetrics.wetDistance(for: selected),
-                    totalDistance: selected.distance
+                    totalDistance: selected.distance,
+                    wetStretches: stretches,
+                    isDry: selected.rainSegments.isEmpty
                 )
             }
         }
     }
 
-    private var map: some View {
+    private func map(stretches: [WetStretch]) -> some View {
         MapReader { proxy in
             Map(position: $cameraPosition) {
                 UserAnnotation()
@@ -198,13 +223,13 @@ struct MapScreenView: View {
             .mapStyle(.standard)
             .ignoresSafeArea()
             .overlay {
-                mapBadges(proxy: proxy)
+                mapBadges(proxy: proxy, stretches: stretches)
             }
         }
     }
 
     @ViewBuilder
-    private func mapBadges(proxy: MapProxy) -> some View {
+    private func mapBadges(proxy: MapProxy, stretches: [WetStretch]) -> some View {
         if let plan = tripPlanner.routePlan, !isTripPlanFailed,
            let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
             if let destinationPoint = proxy.convert(plan.destination.coordinate, to: .local) {
@@ -215,6 +240,12 @@ struct MapScreenView: View {
                let badgePoint = proxy.convert(midpoint, to: .local) {
                 fastestBadge(selected)
                     .position(x: badgePoint.x, y: badgePoint.y - 26)
+            }
+            ForEach(Array(stretches.prefix(RainMetrics.maxWetStretchBadges))) { stretch in
+                if let point = proxy.convert(stretch.startCoordinate, to: .local) {
+                    RainTimeBadge(arrivalDate: stretch.arrivalDate)
+                        .position(x: point.x, y: point.y + 20)
+                }
             }
         }
     }
@@ -296,8 +327,10 @@ struct MapScreenView: View {
 
     private func selectDestination(_ result: SearchResult) {
         viewModel.selectDestination(result)
-        if let coordinate = viewModel.currentCoordinate {
-            tripPlanner.setOriginFromCurrentLocation(coordinate)
+        if tripPlanner.origin == nil || tripPlanner.isOriginCurrentLocation {
+            if let coordinate = viewModel.currentCoordinate {
+                tripPlanner.setOriginFromCurrentLocation(coordinate)
+            }
         }
         tripPlanner.updateDestination(
             RouteWaypoint(
@@ -307,6 +340,17 @@ struct MapScreenView: View {
                 categorySymbol: result.categorySymbol
             )
         )
+    }
+
+    private func clearDestination() {
+        tripPlanner.clearDestination()
+        viewModel.clearDestination()
+        rainOverlays = []
+        viewModel.isTripSheetPresented = false
+        viewModel.recenter()
+        Task { @MainActor in
+            UIAccessibility.post(notification: .announcement, argument: "Destination cleared")
+        }
     }
 
     private func isCurrentLocation(_ waypoint: RouteWaypoint) -> Bool {
@@ -371,6 +415,26 @@ private struct RainOverlay: Identifiable {
     let id = UUID()
     let polyline: MKPolyline
     let color: Color
+}
+
+private struct RainTimeBadge: View {
+    let arrivalDate: Date
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "cloud.rain.fill")
+                .font(.headline)
+            Text(arrivalDate.formatted(Date.FormatStyle(date: .omitted, time: .shortened)))
+                .font(.headline)
+                .lineLimit(1)
+        }
+        .foregroundStyle(Color.primary)
+        .padding(.horizontal, 12)
+        .frame(minHeight: 36)
+        .background(Capsule().fill(Color(.systemBackground)))
+        .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
+        .accessibilityHidden(true)
+    }
 }
 
 private struct RainUnavailableBanner: View {

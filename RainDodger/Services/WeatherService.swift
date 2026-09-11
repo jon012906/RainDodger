@@ -18,16 +18,33 @@ final class LiveWeatherService: WeatherService {
     private let service = WeatherKit.WeatherService()
 
     func rainChance(at coordinate: CLLocationCoordinate2D, on arrival: Date) async throws -> Double {
-        let weather = try await service.weather(
-            for: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        )
-        if let minuteWeather = minuteForecastEntry(in: weather, at: arrival) {
-            return minuteWeather.precipitationChance
+        print("☁️ [Weather] Requesting rain chance at lat=\(String(format: "%.4f", coordinate.latitude)), lon=\(String(format: "%.4f", coordinate.longitude)) arrival=\(arrival.formatted())")
+        do {
+            let weather = try await service.weather(
+                for: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            )
+            print("☁️ [Weather] Got weather. Condition: \(weather.currentWeather.condition.rawValue), temp: \(weather.currentWeather.temperature.formatted())")
+            if let minuteForecast = weather.minuteForecast {
+                print("☁️ [Weather] Minute forecast available (\(minuteForecast.forecast.count) entries)")
+            } else {
+                print("☁️ [Weather] No minute forecast")
+            }
+            print("☁️ [Weather] Hourly forecast: \(weather.hourlyForecast.forecast.count) entries")
+            if let minuteWeather = minuteForecastEntry(in: weather, at: arrival) {
+                print("☁️ [Weather] ✅ Using MINUTE forecast: \(minuteWeather.precipitationChance)")
+                return minuteWeather.precipitationChance
+            }
+            if let hourWeather = hourForecastEntry(in: weather, at: arrival) {
+                print("☁️ [Weather] ✅ Using HOUR forecast: \(hourWeather.precipitationChance)")
+                return hourWeather.precipitationChance
+            }
+            let current = currentRainChance(weather)
+            print("☁️ [Weather] ⚠️ Using CURRENT condition fallback: \(current) (condition=\(weather.currentWeather.condition.rawValue))")
+            return current
+        } catch {
+            print("☁️ [Weather] ❌ ERROR: \(error)")
+            throw error
         }
-        if let hourWeather = hourForecastEntry(in: weather, at: arrival) {
-            return hourWeather.precipitationChance
-        }
-        return currentRainChance(weather)
     }
 
     private func minuteForecastEntry(in weather: Weather, at arrival: Date) -> MinuteWeather? {

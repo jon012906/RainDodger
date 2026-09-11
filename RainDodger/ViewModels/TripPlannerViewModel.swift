@@ -58,6 +58,10 @@ final class TripPlannerViewModel {
         weatherState == .unavailable
     }
 
+    var isOriginCurrentLocation: Bool {
+        origin?.name == currentLocationName
+    }
+
     private var selectedAlternativeIndex: Int? {
         guard let selectedRouteID, let plan = routePlan else { return nil }
         return plan.alternatives.firstIndex(where: { $0.id == selectedRouteID })
@@ -110,11 +114,7 @@ final class TripPlannerViewModel {
             selectedRouteID: id
         )
         guard let selected = plan.alternatives.first(where: { $0.id == id }) else { return }
-        if selected.rainSegments.isEmpty {
-            loadWeather(for: selected, departure: departureDate)
-        } else {
-            weatherState = .loaded
-        }
+        weatherState = selected.rainSegments.isEmpty ? .idle : .loaded
     }
 
     func setDepartureDate(_ date: Date?) {
@@ -188,13 +188,10 @@ final class TripPlannerViewModel {
         }
     }
 
-    func clear() {
+    func clearDestination() {
         cancelPlan()
-        origin = nil
         destination = nil
-        stop = nil
         selectedRouteID = nil
-        departureDate = nil
         routePlan = nil
         state = .idle
         weatherState = .idle
@@ -205,10 +202,20 @@ final class TripPlannerViewModel {
         weatherTask = Task { [weak self] in
             guard let self else { return }
             self.weatherState = .loading
+            let departStr = departure?.formatted(date: .omitted, time: .shortened) ?? "now"
+            print("🌧️ [RainCheck] Starting weather check. Departure: \(departStr), route distance: \(Int(alternative.distance / 1000))km, points: \(alternative.coordinatePoints.count)")
             do {
                 let segments = try await self.sampleRain(for: alternative, departure: departure)
                 guard !Task.isCancelled else { return }
                 guard let plan = self.routePlan else { return }
+                let wetCount = segments.filter { $0.rainChance >= 0.5 }.count
+                let maxChance = segments.map(\.rainChance).max() ?? 0
+                print("🌧️ [RainCheck] ✅ Done! \(segments.count) segments, \(wetCount) wet (≥50%), max chance: \(Int(maxChance * 100))%")
+                for seg in segments {
+                    let pct = Int(seg.rainChance * 100)
+                    let flag = pct >= 60 ? "🔴" : pct >= 30 ? "🟡" : "🔵"
+                    print("🌧️ [RainCheck]   \(flag) #\(seg.index): \(pct)% at \(seg.arrivalDate.formatted(date: .omitted, time: .shortened))")
+                }
                 self.routePlan = RoutePlan(
                     origin: plan.origin,
                     destination: plan.destination,
@@ -234,6 +241,7 @@ final class TripPlannerViewModel {
                 self.weatherState = .loaded
             } catch {
                 guard !Task.isCancelled else { return }
+                print("🌧️ [RainCheck] ❌ FAILED: \(error)")
                 self.weatherState = .unavailable
             }
         }
@@ -261,6 +269,7 @@ final class TripPlannerViewModel {
                                 index: sample.index,
                                 coordinate: sample.coordinate,
                                 distanceFromStart: sample.distanceFromStart,
+                                arrivalDate: arrival,
                                 rainChance: chance
                             )
                         )

@@ -11,26 +11,57 @@ import CoreLocation
 struct RouteSummaryPill: View {
     let viewModel: TripPlannerViewModel
     let onTap: () -> Void
+    let onClear: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Button(action: onTap) {
-            Text(content)
-                .font(.headline)
-                .foregroundStyle(Color.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .padding(.horizontal, 20)
-                .frame(minHeight: 44)
-                .background(Capsule().fill(backing))
-                .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+        HStack(spacing: 0) {
+            Button(action: onTap) {
+                VStack(spacing: 4) {
+                    Capsule()
+                        .fill(grabberColor)
+                        .frame(width: 36, height: 5)
+                        .accessibilityHidden(true)
+                    Text(content)
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .padding(.horizontal, 20)
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 10).onEnded { value in
+                    if value.translation.height < -40 {
+                        onTap()
+                    }
+                }
+            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityHint("Double tap or drag up to reopen trip planner")
+            .accessibilityAddTraits(.isButton)
+
+            Button(action: onClear) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.primary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Clear destination")
+            .accessibilityHint("Double tap to clear the destination and return to search")
         }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint("Double tap to reopen trip planner")
-        .accessibilityAddTraits(.isButton)
+        .background(Capsule().fill(backing))
+        .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
     }
 
     private var content: String {
@@ -65,6 +96,10 @@ struct RouteSummaryPill: View {
     private var backing: Color {
         colorScheme == .dark ? Color(.secondarySystemBackground) : Color(.systemBackground)
     }
+
+    private var grabberColor: Color {
+        colorScheme == .dark ? Color(.systemGray3) : Color(.systemGray4)
+    }
 }
 
 #Preview {
@@ -73,7 +108,8 @@ struct RouteSummaryPill: View {
             directionsService: MockDirectionsService(),
             weatherService: MockWeatherService()
         ),
-        onTap: {}
+        onTap: {},
+        onClear: {}
     )
     .padding(16)
 }

@@ -140,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `feat/route-detail` |
-| Feature folders (files this branch owns/adds) | `docs/specs/route-detail.md` · `docs/designs/route-detail.md` · `docs/flows/route-detail.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
-| Models | `RainDodger/Models/RouteStep.swift` (new — `RouteStep` + `RouteTurnType` + English instruction parser) · `RainDodger/Models/RoutePlan.swift` (modified — `RouteAlternative.steps` + shared `RainMetrics.wetDistance`) |
-| Services | `RainDodger/Services/DirectionsService.swift` (modified — Live/Mock build `steps` from `MKRoute.steps`, distance-aligned; both legs stitched for stops) |
-| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` (modified — rain→step mapping, per-step representative chance, wet-distance summary) |
-| Views | `RainDodger/Views/RouteDetailSheet.swift` (new) · `RainDodger/Views/RouteStepRow.swift` (new) · `RainDodger/Views/RouteCard.swift` (modified — re-tap selected card expands) · `RainDodger/Views/TripPlannerSheet.swift` (modified — cards/steps mode, medium/large detent selection) · `RainDodger/Views/MapScreenView.swift` (modified — shared wet-distance helper) |
+| Branch | `fix/clear-destination` |
+| Feature folders (files this branch owns/adds) | `docs/specs/trip-planner.md` · `docs/designs/trip-planner.md` · `docs/flows/trip-planner.md` · `docs/specs/maps-screen.md` · `docs/designs/maps-screen.md` · `docs/flows/maps-screen.md` · `docs/specs/weather-forecast.md` · `docs/designs/weather-forecast.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Models | — (no changes this branch) |
+| Services | — (no changes this branch) |
+| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` · `RainDodger/ViewModels/MapViewModel.swift` (modified — clear-destination reset: `destination`/`routePlan`/`selectedRouteID` → nil, `state`/`weatherState` → `.idle`, cancel in-flight plan/weather tasks, `selectedDestination` → nil) |
+| Views | `RainDodger/Views/RouteSummaryPill.swift` · `RainDodger/Views/TripPlannerSheet.swift` · `RainDodger/Views/MapScreenView.swift` (modified — trailing clear X on the pill and the destination row, ≥ 44 pt, return to the empty search state; no new files, pbxproj untouched) |
 | Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 

@@ -54,6 +54,7 @@ struct SearchPage: View {
 
             content
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(colorScheme == .dark ? Color(.systemBackground) : Color.searchBackground)
         .onAppear {
             viewModel.onAppear()

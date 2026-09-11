@@ -1,13 +1,13 @@
 # Design — Route Detail
 
-Reference screenshot (Apple Maps route step list, iOS): after selecting a route and tapping its expanded detail, a full-height sheet lists the turn-by-turn steps — each row a turn-arrow icon, the instruction text, and the distance on the right; rainy steps add a rain icon and a percentage. A back chevron at the top returns to the route options. Rain Dodger shows this step list by expanding the **existing** planner sheet (`.medium` → `.large`) when the rider re-taps the already-selected route card — no nested second sheet.
+Reference screenshot (Apple Maps route step list, iOS): after selecting a route and tapping its expanded detail, a full-height sheet lists the turn-by-turn steps — each row a turn-arrow icon, the instruction text, and the distance on the right; rainy steps add a rain icon and a percentage. A back chevron at the top returns to the route options. Rain Dodger shows this step list by expanding the **existing** planner sheet (`.medium` → `.large`) via the **"Route details" row** below the route cards (re-tapping the already-selected route card stays a shortcut) — no nested second sheet.
 
 ## 1. Screens
 
-- **Route cards (unchanged):** the planner half-sheet with origin/destination/stop, Leave at, Check Route, and the route cards. Re-tapping the **selected** card switches to the step view.
+- **Route cards (entry point):** the planner half-sheet with origin/destination/stop, Leave at, Check Route, the route cards, and a **"Route details" row** below the cards (≥ 44 pt, chevron) as the clear, discoverable entry to the step view; re-tapping the **selected** route card remains a shortcut. The row shows only when `state == .loaded` and a route is selected.
 - **Detail loaded with wet steps:** sheet expanded to `.large`; header row (back chevron · "Route details" title · empty trailing), wet-distance summary "Rain on 14 km of 40 km", and the scrollable step list. Wet steps show `cloud.rain.fill` + a percentage; dry steps show only icon + instruction + distance.
 - **Checking rain:** while `weatherState == .loading` the header area reads "Checking rain along your route…" (inline `ProgressView` + label); step marks are withheld until the forecast attaches.
-- **No forecast (idle):** steps render without marks; a full-width blue "Check route for rain" button sits at the bottom of the step view and calls `checkRoute()`.
+- **No forecast (idle):** steps render without marks; a full-width blue "Check route for rain" button sits at the bottom of the step view — tapping it dismisses the planner sheet, then calls `checkRoute()` and shows the full-map "Checking rain along your route…" overlay over the map and the pill (same dismiss-then-check behavior as the main Check Route).
 - **Weather unavailable:** the header area shows the note "Live rain unavailable" (`icloud.slash` icon + text); steps render without marks; no summary, no button.
 - **Empty steps:** a centered "Turn-by-turn directions unavailable for this route" message replaces the list; the back control stays.
 - **Back to cards:** tapping the back chevron returns to the route cards and collapses the sheet to `.medium`, with all trip state preserved.
@@ -21,18 +21,18 @@ Reference screenshot (Apple Maps route step list, iOS): after selecting a route 
   - **Checking row:** inline `ProgressView(.small)` + "Checking rain along your route…" (`Color.secondary`).
   - **Unavailable note:** `icloud.slash` icon (`Color.secondary`) + "Live rain unavailable" (`Color.primary`). (`cloud.slash` is not available in SF Symbols; `icloud.slash` is the corrected symbol.)
   - **Step list:** vertical `ScrollView` with one `RouteStepRow` per step inside a rounded card (`Color.searchElement` light / `Color(.secondarySystemBackground)` dark), hairline dividers between rows, same card treatment as the trip rows.
-  - **Bottom affordance (idle only):** full-width "Check route for rain" button — `Color.checkRouteBlue` backing, white `cloud.rain` icon + label, ≥ 44 pt — calls `viewModel.checkRoute()`.
+  - **Bottom affordance (idle only):** full-width "Check route for rain" button — `Color.checkRouteBlue` backing, white `cloud.rain` icon + label, ≥ 44 pt — dismisses the sheet, then calls `viewModel.checkRoute()` (full-map overlay covers the map and pill).
 - **RouteStepRow** — leading turn icon (24 pt, `Color.secondary`), instruction text (`Color.primary`, `.rdRowName`, wraps to 2 lines max), trailing distance text (`Color.secondary`, `.rdRowStreet`); wet steps add `cloud.rain.fill` (blue) + "60%" (`Color.primary`) after the distance. Row min-height 44 pt; when the instruction is long the distance column stays right-aligned.
 - **Map (unchanged):** the selected route's colored rain segments, legend, badges, and camera fit are untouched by the step view.
 
 ## 3. Components
 
-- **RouteDetailSheet** — the step view rendered inside `TripPlannerSheet` when the selected card is re-tapped; owns the back control, the header summary/note, the step list, and the "Check route for rain" affordance; renders `TripPlannerViewModel` state (weather idle/loading/loaded/unavailable, empty steps).
+- **RouteDetailSheet** — the step view inside `TripPlannerSheet`, opened via the **"Route details" row** (re-tap of the already-selected card is a shortcut); owns the back control, the header summary/note, the step list, and the "Check route for rain" affordance; renders `TripPlannerViewModel` state (weather idle/loading/loaded/unavailable, empty steps).
 - **RouteStepRow** — one step: `RouteTurnType` icon + instruction + distance + optional rain icon/% (wet only). Renders a `RouteStep` plus its representative `rainChance: Double?` (nil = no forecast; < 0.50 = dry, no mark).
 - **RouteTurnType icon mapping** (icons are decorative; the instruction text carries the meaning):
   - `depart` → `location.north.fill` · `straight` → `arrow.up` · `turnLeft` → `arrow.turn.up.left` · `turnRight` → `arrow.turn.up.right` · `slightLeft` → `arrow.up.left` · `slightRight` → `arrow.up.right` · `keepLeft` → `arrow.turn.up.left` · `keepRight` → `arrow.turn.up.right` · `merge` → `arrow.merge` · `roundabout` → `arrow.triangle.turn.up.right.circle` · `uTurn` → `arrow.uturn.left` · `arrive` → `flag.checkered` · `other` → `arrow.up`
-- **RouteCard (modified)** — its tap handler now distinguishes select (non-selected card) from expand (already-selected card); the sheet's re-tap switches to the step view.
-- **TripPlannerSheet (modified)** — gains the cards/steps mode (`@State`), the `.medium`/`.large` detent selection binding, and hosts `RouteDetailSheet` in steps mode.
+- **RouteCard (modified)** — its tap handler now distinguishes select (non-selected card) from expand (already-selected card); the already-selected re-tap is a **shortcut** to the step view (the "Route details" row is the primary entry).
+- **TripPlannerSheet (modified)** — gains the cards/steps mode (`@State`), the `.medium`/`.large` detent selection binding, the **"Route details" row** (primary entry, below the route cards; ≥ 44 pt, chevron) that opens the step view, and hosts `RouteDetailSheet` in steps mode.
 - **TripPlannerViewModel (modified)** — exposes the selected alternative's steps, computes each step's representative rain chance from `rainSegments`, and exposes the wet-distance summary via `RainMetrics`.
 - **RainMetrics (shared)** — the single shared wet-distance helper (`RainMetrics.wetDistance(for:)`) used by `MapScreenView`/`RainLegend` and `RouteDetailSheet` so the map legend and the detail header always agree.
 

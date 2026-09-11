@@ -102,6 +102,10 @@ final class MapViewModel {
         isTripSheetPresented = true
     }
 
+    func clearDestination() {
+        selectedDestination = nil
+    }
+
     private func syncAuthorizationState() async {
         var status = await locationService.authorizationStatus()
         if status == .notDetermined {

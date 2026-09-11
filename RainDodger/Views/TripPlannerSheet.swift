@@ -12,8 +12,10 @@ struct TripPlannerSheet: View {
     let viewModel: TripPlannerViewModel
     let searchService: DestinationSearchService
     let searchCoordinate: CLLocationCoordinate2D?
+    let onClearDestination: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
     @State private var searchViewModel: SearchViewModel
     @State private var activeSearch: SearchTarget?
     @State private var isDeparturePickerPresented = false
@@ -23,15 +25,18 @@ struct TripPlannerSheet: View {
     init(
         viewModel: TripPlannerViewModel,
         searchService: DestinationSearchService,
-        searchCoordinate: CLLocationCoordinate2D?
+        searchCoordinate: CLLocationCoordinate2D?,
+        onClearDestination: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.searchService = searchService
         self.searchCoordinate = searchCoordinate
+        self.onClearDestination = onClearDestination
         _searchViewModel = State(initialValue: SearchViewModel(searchService: searchService))
     }
 
     private enum SearchTarget: String, Identifiable {
+        case destination
         case origin
         case stop
 
@@ -39,6 +44,7 @@ struct TripPlannerSheet: View {
 
         var context: SearchContext {
             switch self {
+            case .destination: return .destination
             case .origin: return .origin
             case .stop: return .stop
             }
@@ -49,6 +55,12 @@ struct TripPlannerSheet: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         formatter.dateStyle = .none
+        return formatter
+    }()
+
+    private let departureDayMonthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "dMMM", options: 0, locale: Locale.current)
         return formatter
     }()
 
@@ -137,15 +149,34 @@ struct TripPlannerSheet: View {
 
     private var destinationRow: some View {
         HStack(spacing: 8) {
-            HStack(spacing: 12) {
-                rowIcon(destinationSymbol, color: .orange)
-                labelValue("Destination", value: destinationValue, valueLines: 2)
-                Spacer(minLength: 0)
+            Button {
+                presentSearch(.destination)
+            } label: {
+                HStack(spacing: 12) {
+                    rowIcon(destinationSymbol, color: .orange)
+                    labelValue("Destination", value: destinationValue, valueLines: 2)
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 16)
+                .contentShape(Rectangle())
             }
-            .padding(.leading, 16)
+            .buttonStyle(.plain)
             .frame(maxWidth: .infinity, minHeight: 44)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Destination, \(destinationValue)")
+            .accessibilityHint("Double tap to change destination")
+            if viewModel.destination != nil {
+                Button(action: onClearDestination) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.primary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear destination")
+                .accessibilityHint("Double tap to clear the destination and close the planner")
+            }
             dragHandle
         }
     }
@@ -265,7 +296,10 @@ struct TripPlannerSheet: View {
     }
 
     private var checkRouteButton: some View {
-        Button(action: viewModel.checkRoute) {
+        Button {
+            dismiss()
+            viewModel.checkRoute()
+        } label: {
             HStack(spacing: 8) {
                 Image(systemName: "scooter")
                     .font(.system(size: 17, weight: .semibold))
@@ -324,7 +358,8 @@ struct TripPlannerSheet: View {
                                 } else {
                                     viewModel.selectRoute(alternative.id)
                                 }
-                            }
+                            },
+                            departureDate: viewModel.departureDate
                         )
                     }
                 }
@@ -347,7 +382,11 @@ struct TripPlannerSheet: View {
 
     private var leaveAtPillText: String {
         guard let departureDate = viewModel.departureDate else { return "Now" }
-        return departureTimeFormatter.string(from: departureDate)
+        let time = departureTimeFormatter.string(from: departureDate)
+        if Calendar.current.isDateInToday(departureDate) {
+            return time
+        }
+        return "\(departureDayMonthFormatter.string(from: departureDate)) \(time)"
     }
 
     private var pillBacking: Color {
@@ -365,6 +404,8 @@ struct TripPlannerSheet: View {
 
     private func handlePick(_ result: SearchResult, for target: SearchTarget) {
         switch target {
+        case .destination:
+            viewModel.updateDestination(waypoint(from: result))
         case .origin:
             viewModel.updateOrigin(waypoint(from: result))
         case .stop:
@@ -390,7 +431,8 @@ struct TripPlannerSheet: View {
             weatherService: MockWeatherService()
         ),
         searchService: MockDestinationSearchService(),
-        searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010)
+        searchCoordinate: CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010),
+        onClearDestination: {}
     )
     .presentationDragIndicator(.visible)
 }

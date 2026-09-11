@@ -51,6 +51,8 @@ enum RainBand: CaseIterable {
 struct RainLegend: View {
     let wetDistance: CLLocationDistance
     let totalDistance: CLLocationDistance
+    let wetStretches: [WetStretch]
+    var isDry: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -62,9 +64,15 @@ struct RainLegend: View {
                     chipRow
                 }
             }
-            Text(wetDistanceText)
-                .font(.rdRowStreet)
-                .foregroundStyle(Color.primary)
+            if !isDry {
+                Text(wetDistanceText)
+                    .font(.rdRowStreet)
+                    .foregroundStyle(Color.primary)
+            }
+            if !isDry, !visibleWetStretches.isEmpty {
+                timeLine
+                    .font(.rdRowStreet)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -100,14 +108,116 @@ struct RainLegend: View {
         "\(Int((distance / 1000).rounded())) km"
     }
 
+    private var visibleWetStretches: [WetStretch] {
+        Array(wetStretches.prefix(RainMetrics.maxWetStretchBadges))
+    }
+
+    private var additionalWetStretchCount: Int {
+        max(wetStretches.count - visibleWetStretches.count, 0)
+    }
+
+    private var timeLine: Text {
+        var attributed = AttributedString("Rain at")
+        attributed.foregroundColor = Color.primary
+        for (index, stretch) in visibleWetStretches.enumerated() {
+            if index > 0 {
+                var separator = AttributedString(" ·")
+                separator.foregroundColor = Color.secondary
+                attributed += separator
+            }
+            var time = AttributedString(" \(formattedTime(stretch.arrivalDate))")
+            time.foregroundColor = Color.primary
+            attributed += time
+        }
+        if additionalWetStretchCount > 0 {
+            var more = AttributedString(" +\(additionalWetStretchCount) more")
+            more.foregroundColor = Color.secondary
+            attributed += more
+        }
+        return Text(attributed)
+    }
+
+    private func formattedTime(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(date: .omitted, time: .shortened))
+    }
+
     private var accessibilityLabel: String {
+        if isDry {
+            return "Rain legend. Dry, under 30 percent. Light, 30 to 60 percent. Heavy rain, 60 percent or more. No rain on this route."
+        }
         let wetSpoken = "\(Int((wetDistance / 1000).rounded())) kilometers"
         let totalSpoken = "\(Int((totalDistance / 1000).rounded())) kilometers"
-        return "Rain legend. Dry, under 30 percent. Light, 30 to 60 percent. Heavy rain, 60 percent or more. \(wetSpoken) of \(totalSpoken) with rain 50 percent or more."
+        var label = "Rain legend. Dry, under 30 percent. Light, 30 to 60 percent. Heavy rain, 60 percent or more. \(wetSpoken) of \(totalSpoken) with rain 50 percent or more."
+        if !visibleWetStretches.isEmpty {
+            label += " Rain likely at \(spokenTimeList(visibleWetStretches.map(\.arrivalDate)))."
+        }
+        if additionalWetStretchCount > 0 {
+            label += " \(additionalWetStretchCount) more wet stretches."
+        }
+        return label
+    }
+
+    private func spokenTimeList(_ dates: [Date]) -> String {
+        let times = dates.map(formattedTime)
+        switch times.count {
+        case 0: return ""
+        case 1: return times[0]
+        case 2: return "\(times[0]) and \(times[1])"
+        default:
+            return "\(times.dropLast().joined(separator: ", ")), and \(times[times.count - 1])"
+        }
     }
 }
 
 #Preview {
-    RainLegend(wetDistance: 14000, totalDistance: 40000)
-        .padding(16)
+    let now = Date()
+    VStack(alignment: .leading, spacing: 16) {
+        RainLegend(
+            wetDistance: 14000,
+            totalDistance: 40000,
+            wetStretches: [
+                WetStretch(
+                    startIndex: 0,
+                    startCoordinate: CLLocationCoordinate2D(latitude: 37.77, longitude: -122.42),
+                    arrivalDate: now.addingTimeInterval(3600),
+                    rainChance: 0.72,
+                    distanceFromStart: 5000
+                ),
+                WetStretch(
+                    startIndex: 1,
+                    startCoordinate: CLLocationCoordinate2D(latitude: 37.78, longitude: -122.43),
+                    arrivalDate: now.addingTimeInterval(5400),
+                    rainChance: 0.55,
+                    distanceFromStart: 12000
+                ),
+                WetStretch(
+                    startIndex: 2,
+                    startCoordinate: CLLocationCoordinate2D(latitude: 37.79, longitude: -122.44),
+                    arrivalDate: now.addingTimeInterval(7200),
+                    rainChance: 0.81,
+                    distanceFromStart: 18000
+                ),
+                WetStretch(
+                    startIndex: 3,
+                    startCoordinate: CLLocationCoordinate2D(latitude: 37.80, longitude: -122.45),
+                    arrivalDate: now.addingTimeInterval(9000),
+                    rainChance: 0.63,
+                    distanceFromStart: 24000
+                ),
+                WetStretch(
+                    startIndex: 4,
+                    startCoordinate: CLLocationCoordinate2D(latitude: 37.81, longitude: -122.46),
+                    arrivalDate: now.addingTimeInterval(10800),
+                    rainChance: 0.67,
+                    distanceFromStart: 30000
+                )
+            ]
+        )
+        RainLegend(
+            wetDistance: 0,
+            totalDistance: 40000,
+            wetStretches: []
+        )
+    }
+    .padding(16)
 }
