@@ -96,7 +96,6 @@ struct TripPlannerSheet: View {
                 .padding(.top, 4)
             groupedCard
             leaveAtRow
-            checkRouteButton
             cardsArea
             if showsRouteDetails {
                 routeDetailsRow
@@ -298,29 +297,6 @@ struct TripPlannerSheet: View {
         .frame(minHeight: 44)
     }
 
-    private var checkRouteButton: some View {
-        Button {
-            dismiss()
-            viewModel.checkRoute()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "scooter")
-                    .font(.system(size: 17, weight: .semibold))
-                    .accessibilityHidden(true)
-                Text("Check Route")
-                    .font(.headline)
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.checkRouteBlue))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Check Route")
-        .accessibilityHint("Double tap to check the route and its rain forecast")
-    }
-
     @ViewBuilder
     private var cardsArea: some View {
         switch viewModel.state {
@@ -361,7 +337,8 @@ struct TripPlannerSheet: View {
                                 } else {
                                     viewModel.selectRoute(alternative.id)
                                 }
-                            }
+                            },
+                            departureDate: viewModel.departureDate
                         )
                     }
                 }

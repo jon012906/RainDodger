@@ -13,8 +13,16 @@ struct RouteCard: View {
     let alternative: RouteAlternative
     let isSelected: Bool
     let onTap: () -> Void
+    var departureDate: Date?
 
     @Environment(\.colorScheme) private var colorScheme
+
+    private static let arrivalFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
 
     var body: some View {
         Button(action: onTap) {
@@ -38,6 +46,11 @@ struct RouteCard: View {
                 Text(distanceText)
                     .font(.rdRowStreet)
                     .foregroundStyle(Color.secondary)
+                if isSelected, let arrivalText {
+                    Text(arrivalText)
+                        .font(.rdRowStreet)
+                        .foregroundStyle(Color.blue)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -58,6 +71,12 @@ struct RouteCard: View {
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
     }
 
+    private var arrivalText: String? {
+        let departure = departureDate ?? Date()
+        let arrival = departure.addingTimeInterval(alternative.travelTime)
+        return "Arrive \(Self.arrivalFormatter.string(from: arrival))"
+    }
+
     private var distanceText: String {
         if alternative.distance < 1000 {
             return "\(Int(alternative.distance)) m"
@@ -72,7 +91,13 @@ struct RouteCard: View {
         } else {
             distance = "\(Int(alternative.distance / 1000)) km"
         }
-        return "Route \(index + 1), \(Int(alternative.travelTime / 60)) minutes, \(distance), \(isSelected ? "selected" : "not selected")"
+        let arrival: String
+        if let arrivalText {
+            arrival = ", \(arrivalText)"
+        } else {
+            arrival = ""
+        }
+        return "Route \(index + 1), \(Int(alternative.travelTime / 60)) minutes, \(distance)\(arrival), \(isSelected ? "selected" : "not selected")"
     }
 
     private var backing: Color {
@@ -81,6 +106,7 @@ struct RouteCard: View {
 }
 
 #Preview {
+    let now = Date()
     let points = [
         CLLocationCoordinate2D(latitude: 52.229, longitude: 21.010),
         CLLocationCoordinate2D(latitude: 52.242, longitude: 21.015)
@@ -95,7 +121,8 @@ struct RouteCard: View {
                 coordinatePoints: points
             ),
             isSelected: true,
-            onTap: {}
+            onTap: {},
+            departureDate: now
         )
         RouteCard(
             index: 1,
@@ -106,7 +133,8 @@ struct RouteCard: View {
                 coordinatePoints: points
             ),
             isSelected: false,
-            onTap: {}
+            onTap: {},
+            departureDate: now
         )
     }
     .padding(16)

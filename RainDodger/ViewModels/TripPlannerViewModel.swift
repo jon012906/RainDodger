@@ -127,7 +127,7 @@ final class TripPlannerViewModel {
     }
 
     func plan() {
-        runRouting(loadWeather: false)
+        runRouting(loadWeather: true)
     }
 
     func checkRoute() {
