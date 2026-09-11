@@ -12,26 +12,56 @@ import CoreLocation
 struct RouteStepRow: View {
     let step: RouteStep
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: step.turnType.symbolName)
-                .font(.system(size: 20))
-                .foregroundStyle(Color.secondary)
-                .frame(width: 24)
-                .accessibilityHidden(true)
-            Text(step.instruction)
-                .font(.rdRowName)
-                .foregroundStyle(Color.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            trailingColumn
+        HStack(spacing: 0) {
+            if step.wet {
+                rainStripe
+            }
+            HStack(spacing: 12) {
+                Image(systemName: step.turnType.symbolName)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.secondary)
+                    .frame(width: 24)
+                    .accessibilityHidden(true)
+                Text(step.instruction)
+                    .font(.rdRowName)
+                    .foregroundStyle(Color.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                trailingColumn
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
         .frame(minHeight: 44)
+        .background {
+            if step.wet {
+                rainBackground
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+    }
+
+    private var rainStripe: some View {
+        Rectangle()
+            .fill(rainColor)
+            .frame(width: 4)
+            .accessibilityHidden(true)
+    }
+
+    private var rainBackground: some View {
+        rainColor.opacity(colorScheme == .dark ? 0.12 : 0.08)
+    }
+
+    private var rainColor: Color {
+        guard let chance = step.rainChance else { return .blue }
+        if chance >= 0.60 { return .red }
+        if chance >= 0.30 { return .orange }
+        return .blue
     }
 
     private var trailingColumn: some View {

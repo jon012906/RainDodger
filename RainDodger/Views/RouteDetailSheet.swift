@@ -20,9 +20,6 @@ struct RouteDetailSheet: View {
             header
             stateArea
             content
-            if showsCheckButton {
-                checkRouteButton
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 16)
@@ -160,29 +157,6 @@ struct RouteDetailSheet: View {
             .padding(.horizontal, 8)
     }
 
-    private var checkRouteButton: some View {
-        Button {
-            dismiss()
-            viewModel.checkRoute()
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "cloud.rain")
-                    .font(.system(size: 17, weight: .semibold))
-                    .accessibilityHidden(true)
-                Text("Check route for rain")
-                    .font(.headline)
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.checkRouteBlue))
-            .contentShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Check route for rain")
-        .accessibilityHint("Double tap to check the route for rain")
-    }
-
     private var selectedAlternative: RouteAlternative? {
         guard let plan = viewModel.routePlan else { return nil }
         return plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first
@@ -191,13 +165,6 @@ struct RouteDetailSheet: View {
     private var hasForecast: Bool {
         guard let alternative = selectedAlternative else { return false }
         return viewModel.weatherState == .loaded && !alternative.rainSegments.isEmpty
-    }
-
-    private var showsCheckButton: Bool {
-        guard selectedAlternative != nil else { return false }
-        return viewModel.weatherState != .loading
-            && viewModel.weatherState != .unavailable
-            && !hasForecast
     }
 
     private var wetDistanceText: String {
