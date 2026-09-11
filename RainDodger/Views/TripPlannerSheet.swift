@@ -96,10 +96,8 @@ struct TripPlannerSheet: View {
                 .padding(.top, 4)
             groupedCard
             leaveAtRow
+            checkRouteButton
             cardsArea
-            if showsRouteDetails {
-                routeDetailsRow
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.horizontal, 16)
@@ -297,6 +295,29 @@ struct TripPlannerSheet: View {
         .frame(minHeight: 44)
     }
 
+    private var checkRouteButton: some View {
+        Button {
+            dismiss()
+            viewModel.checkRoute()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "scooter")
+                    .font(.system(size: 17, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text("Check Route")
+                    .font(.headline)
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color.checkRouteBlue))
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Check Route")
+        .accessibilityHint("Double tap to check the route and its rain forecast")
+    }
+
     @ViewBuilder
     private var cardsArea: some View {
         switch viewModel.state {
@@ -345,37 +366,6 @@ struct TripPlannerSheet: View {
                 .padding(.vertical, 4)
             }
         }
-    }
-
-    private var showsRouteDetails: Bool {
-        guard viewModel.state == .loaded, let plan = viewModel.routePlan else { return false }
-        return plan.alternatives.contains { $0.id == plan.selectedRouteID }
-    }
-
-    private var routeDetailsRow: some View {
-        Button {
-            detent = .large
-            showsDetail = true
-        } label: {
-            HStack(spacing: 12) {
-                Text("Route details")
-                    .font(.rdRowName)
-                    .foregroundStyle(Color.primary)
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.secondary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(rowBacking, in: RoundedRectangle(cornerRadius: 16))
-            .contentShape(RoundedRectangle(cornerRadius: 16))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Route details")
-        .accessibilityHint("Double tap to open step-by-step directions")
     }
 
     private var originValue: String {
