@@ -178,11 +178,12 @@ struct MapScreenView: View {
            let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
             if tripPlanner.weatherUnavailable {
                 RainUnavailableBanner()
-            } else if !selected.rainSegments.isEmpty {
+            } else if tripPlanner.weatherState == .loaded {
                 RainLegend(
                     wetDistance: RainMetrics.wetDistance(for: selected),
                     totalDistance: selected.distance,
-                    wetStretches: stretches
+                    wetStretches: stretches,
+                    isDry: selected.rainSegments.isEmpty
                 )
             }
         }

@@ -52,6 +52,7 @@ struct RainLegend: View {
     let wetDistance: CLLocationDistance
     let totalDistance: CLLocationDistance
     let wetStretches: [WetStretch]
+    var isDry: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -63,10 +64,12 @@ struct RainLegend: View {
                     chipRow
                 }
             }
-            Text(wetDistanceText)
-                .font(.rdRowStreet)
-                .foregroundStyle(Color.primary)
-            if !visibleWetStretches.isEmpty {
+            if !isDry {
+                Text(wetDistanceText)
+                    .font(.rdRowStreet)
+                    .foregroundStyle(Color.primary)
+            }
+            if !isDry, !visibleWetStretches.isEmpty {
                 timeLine
                     .font(.rdRowStreet)
             }
@@ -139,6 +142,9 @@ struct RainLegend: View {
     }
 
     private var accessibilityLabel: String {
+        if isDry {
+            return "Rain legend. Dry, under 30 percent. Light, 30 to 60 percent. Heavy rain, 60 percent or more. No rain on this route."
+        }
         let wetSpoken = "\(Int((wetDistance / 1000).rounded())) kilometers"
         let totalSpoken = "\(Int((totalDistance / 1000).rounded())) kilometers"
         var label = "Rain legend. Dry, under 30 percent. Light, 30 to 60 percent. Heavy rain, 60 percent or more. \(wetSpoken) of \(totalSpoken) with rain 50 percent or more."
