@@ -17,7 +17,7 @@ struct ContentView: View {
             viewModel: viewModel,
             searchService: LiveDestinationSearchService(modelContext: modelContext),
             directionsService: LiveDirectionsService(),
-            weatherService: LiveWeatherService()
+            weatherService: MockRainBadgeWeatherService()
         )
     }
 }
