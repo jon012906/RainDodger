@@ -74,6 +74,7 @@ struct RouteStep: Identifiable {
     let distanceFromStart: CLLocationDistance
     var rainChance: Double?
     var wet: Bool
+    var arrivalDate: Date?
 
     init(
         id: UUID = UUID(),
@@ -85,7 +86,8 @@ struct RouteStep: Identifiable {
         coordinatePoints: [CLLocationCoordinate2D],
         distanceFromStart: CLLocationDistance,
         rainChance: Double? = nil,
-        wet: Bool = false
+        wet: Bool = false,
+        arrivalDate: Date? = nil
     ) {
         self.id = id
         self.index = index
@@ -97,5 +99,6 @@ struct RouteStep: Identifiable {
         self.distanceFromStart = distanceFromStart
         self.rainChance = rainChance
         self.wet = wet
+        self.arrivalDate = arrivalDate
     }
 }
