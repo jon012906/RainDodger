@@ -521,3 +521,12 @@ private struct LocationErrorCard: View {
         weatherService: MockWeatherService()
     )
 }
+
+#Preview("Rain Badge Test — 30% & 85%") {
+    MapScreenView(
+        viewModel: MapViewModel(locationService: MockLocationService()),
+        searchService: MockDestinationSearchService(),
+        directionsService: MockDirectionsService(),
+        weatherService: MockRainBadgeWeatherService()
+    )
+}

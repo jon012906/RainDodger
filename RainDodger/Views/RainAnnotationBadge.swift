@@ -46,22 +46,30 @@ struct RainAnnotationBadge: View {
     }
 }
 
-#Preview {
+#Preview("Rain Badge — 30% vs 85%") {
     let now = Date()
-    HStack(spacing: 16) {
-        RainAnnotationBadge(
-            rainChance: 0.72,
-            arrivalDate: now.addingTimeInterval(3600)
-        )
-        RainAnnotationBadge(
-            rainChance: 0.45,
-            arrivalDate: now.addingTimeInterval(5400)
-        )
-        RainAnnotationBadge(
-            rainChance: 0.91,
-            arrivalDate: now.addingTimeInterval(7200)
-        )
+    VStack(spacing: 24) {
+        HStack(spacing: 20) {
+            VStack(spacing: 8) {
+                RainAnnotationBadge(
+                    rainChance: 0.30,
+                    arrivalDate: now.addingTimeInterval(1800)
+                )
+                Text("30% — Light")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            VStack(spacing: 8) {
+                RainAnnotationBadge(
+                    rainChance: 0.85,
+                    arrivalDate: now.addingTimeInterval(3600)
+                )
+                Text("85% — Heavy")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
-    .padding()
+    .padding(32)
     .background(Color(.systemBackground))
 }

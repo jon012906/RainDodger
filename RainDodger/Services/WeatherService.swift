@@ -60,3 +60,32 @@ final class MockWeatherService: WeatherService {
         return forecast.precipitationChance
     }
 }
+
+@MainActor
+final class MockRainBadgeWeatherService: WeatherService {
+    func weatherForecast(at coordinate: CLLocationCoordinate2D, on arrival: Date) async throws -> WeatherForecastPoint {
+        try await Task.sleep(for: .milliseconds(80))
+        let rainChance: Double
+        let condition: AppWeatherCondition
+        if coordinate.latitude < 1.04 {
+            rainChance = 0.30
+            condition = .cloudy
+        } else {
+            rainChance = 0.85
+            condition = .heavyRain
+        }
+        return WeatherForecastPoint(
+            coordinate: coordinate,
+            distanceFromStart: 0,
+            arrivalTime: arrival,
+            precipitationChance: rainChance,
+            precipitationAmount: rainChance * 10.0,
+            condition: condition
+        )
+    }
+
+    func rainChance(at coordinate: CLLocationCoordinate2D, on arrival: Date) async throws -> Double {
+        let forecast = try await weatherForecast(at: coordinate, on: arrival)
+        return forecast.precipitationChance
+    }
+}
