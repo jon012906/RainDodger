@@ -268,7 +268,7 @@ struct MapScreenView: View {
             }
             ForEach(Array(stretches.prefix(RainMetrics.maxWetStretchBadges))) { stretch in
                 if let point = proxy.convert(stretch.startCoordinate, to: .local) {
-                    RainTimeBadge(rainChance: stretch.rainChance, arrivalDate: stretch.arrivalDate)
+                    RainAnnotationBadge(rainChance: stretch.rainChance, arrivalDate: stretch.arrivalDate)
                         .position(x: point.x, y: point.y + 16)
                 }
             }
@@ -466,42 +466,6 @@ private struct RainOverlay: Identifiable {
     let id = UUID()
     let polyline: MKPolyline
     let color: Color
-}
-
-private struct RainTimeBadge: View {
-    let rainChance: Double
-    let arrivalDate: Date
-
-    private var percentText: String {
-        "\(Int(rainChance * 100))%"
-    }
-
-    private var timeText: String {
-        arrivalDate.formatted(Date.FormatStyle(date: .omitted, time: .shortened))
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "cloud.rain.fill")
-                .font(.caption)
-                .foregroundStyle(RainBand(rainChance: rainChance).color)
-            Text("rain")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(Color.primary)
-            Text(percentText)
-                .font(.caption.weight(.bold))
-                .foregroundStyle(RainBand(rainChance: rainChance).color)
-            Text(timeText)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(Color.secondary)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .frame(minHeight: 28)
-        .background(Capsule().fill(Color(.systemBackground).opacity(0.92)))
-        .shadow(color: .black.opacity(0.2), radius: 3, y: 1)
-        .accessibilityHidden(true)
-    }
 }
 
 private struct RainUnavailableBanner: View {
