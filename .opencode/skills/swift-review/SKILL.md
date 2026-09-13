@@ -134,7 +134,10 @@ before reporting:
 
 1. **Create the report** — write the full verdict block + build/smoke evidence
    + the checklist context to a review report file:
-   `.opencode/tmp/reports/swift-review-<branch>-<timestamp>.md`
+   `.opencode/tmp/reports/swift-review-<plan-id>-r<NN>.md` when reviewing a
+   plan's change set (plan ID from `.opencode/tmp/plans/`, round `r01`, `r02`,
+   ... per plan — see `.opencode/rules/006-plan-artifacts.md`), else the
+   fallback `.opencode/tmp/reports/swift-review-<branch>-<timestamp>.md`
    (`.opencode/tmp/` is gitignored — never commit it).
 2. **Announce it** in chat, mandatory:
    `REVIEW REPORT: <path> — <n> issues (X must fix / Y suggestion) — VERDICT: FAIL`

@@ -120,7 +120,10 @@ If the verdict is `FAIL` (or has any `must fix`), produce a report artifact
 before reporting:
 
 1. **Create the report** — write the full verdict block + checklist context to
-   `.opencode/tmp/reports/design-review-<branch>-<timestamp>.md`
+   `.opencode/tmp/reports/design-review-<plan-id>-r<NN>.md` when reviewing a
+   plan's change set (plan ID from `.opencode/tmp/plans/`, round `r01`, `r02`,
+   ... per plan — see `.opencode/rules/006-plan-artifacts.md`), else the
+   fallback `.opencode/tmp/reports/design-review-<branch>-<timestamp>.md`
    (`.opencode/tmp/` is gitignored — never commit it).
 2. **Announce it** in chat, mandatory:
    `REVIEW REPORT: <path> — <n> issues — VERDICT: FAIL`

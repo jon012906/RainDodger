@@ -30,9 +30,9 @@ Work is built through three specialized agents, defined in `.opencode/agent/`. E
 
 | Agent | Job | Interaction |
 |---|---|---|
-| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `docs/template/spec-guide.md`, `docs/designs/`, `docs/implementation.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues |
-| Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan. Reviews: own build errors only |
-| Reviewer | Verify Executor output against plan + criteria in an isolated session; dispatch the review skill matching the change set (swift-review / design-review / pr-review), built-in fallback otherwise | Verdict: PASS/FAIL + issue lines. Never edits code. Runs immediately after the Executor (no user gate in between) |
+| Planner | Turn intent into a concrete phase plan + acceptance criteria, aligned with `docs/template/spec-guide.md`, `docs/designs/`, `docs/implementation.md` | Reviews: nothing (plans), and replans fixes from Reviewer issues. Outputs `PLAN ID: <id>` as the first line (see `.opencode/rules/006-plan-artifacts.md`) |
+| Executor | Implement exactly the planned phase (or fix plan), verify the build, hand off | Receives: plan ID (reads `.opencode/tmp/plans/<plan-id>.md`). Reviews: own build errors only |
+| Reviewer | Verify Executor output against plan + criteria in an isolated session; dispatch the review skill matching the change set (swift-review / design-review / pr-review), built-in fallback otherwise | Receives: plan ID (reads the plan file). Verdict: PASS/FAIL + issue lines. Never edits code. Runs immediately after the Executor (no user gate in between) |
 
 ```
 User intent ──► Planner ──plan + criteria──► User verify plan
@@ -47,6 +47,14 @@ User intent ──► Planner ──plan + criteria──► User verify plan
 ```
 
 Legend: the Reviewer runs immediately after the Executor — no user gate between them.
+
+## Plan Artifacts & Compaction
+
+Every plan and its review history live in `.opencode/tmp/plans/<plan-id>.md` (gitignored) — the **plan ID** is the handoff token between Planner → Executor → Reviewer and the recovery anchor after context compaction or session restart. Full mechanism (IDs, template, status lifecycle, review linkage): `.opencode/rules/006-plan-artifacts.md`.
+
+- The Planner returns `PLAN ID: <branch>-p<NN>` (fix replans: `<plan-id>-f<NN>`) as the first line; the main session persists the plan file and passes the ID to the next agent.
+- Executor and Reviewer always read the plan file by ID first — never rely on chat memory for the plan.
+- Review verdicts are persisted as `.opencode/tmp/reports/<skill>-<plan-id>-r<NN>.md` and logged in the plan file; FAIL → Planner fix plan (new plan ID, Parent = the failed plan) → Executor → Reviewer round `r<NN+1>` → loop until PASS + user approval.
 
 Rules:
 - **Roles never merge:** Executor never reviews its own work; Reviewer never fixes issues; Planner never writes code.

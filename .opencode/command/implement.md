@@ -4,7 +4,7 @@ description: Execute the current plan or phase, then verify it with @review.
 
 The user has invoked `@implement`. Execute the plan or phase that is currently in progress:
 
-1. Identify the active plan or phase: read the user's `$ARGUMENTS` (e.g. a feature, todo, or milestone name like `@implement Trip Planner`); if none given, look at the current todo list / most recent plan described in this session.
+1. Identify the active plan or phase: read the user's `$ARGUMENTS` (e.g. a plan ID like `weather-enhance-p01`, a feature, todo, or milestone name like `@implement Trip Planner`); if none given, check `.opencode/tmp/plans/` for the latest plan file on this branch (`git branch --show-current`) and read it; otherwise look at the current todo list / most recent plan described in this session. The plan file at `.opencode/tmp/plans/<plan-id>.md` is the single source of truth — read it fully before implementing (see `.opencode/rules/006-plan-artifacts.md`).
 2. Follow the Rain Dodger architecture in `.opencode/rules/003-project-guideline.md`:
    - Feature = one folder set: `Models/`, `Services/`, `ViewModels/`, `Views/`
    - ViewModels are `@MainActor` `@Observable`, never import SwiftUI

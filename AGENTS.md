@@ -37,7 +37,7 @@ CRITICAL: When you encounter a file reference (e.g. `.opencode/rules/003-project
 | When | Load |
 |---|---|
 | Session start, before any work | `.opencode/rules/001-branch-goals.md`, `.opencode/rules/003-project-guideline.md`, `.opencode/rules/002-workflow.md` |
-| Planning / implementing / reviewing (pipeline) | `.opencode/rules/002-workflow.md` |
+| Planning / implementing / reviewing (pipeline) | `.opencode/rules/002-workflow.md`, `.opencode/rules/006-plan-artifacts.md` |
 | App code: models, services, views, viewmodels, SwiftData, maps/weather | `.opencode/rules/003-project-guideline.md`, `.opencode/rules/004-accessibility.md` |
 | Build, verify, code style, frameworks | `.opencode/rules/003-project-guideline.md` (Code Structure section), `.opencode/rules/004-accessibility.md` |
 | Git commit/push, secrets, identity | `.opencode/rules/005-commit-push-guidelines.md` |

@@ -10,4 +10,5 @@ Every feature branch (`docs/`, `feat/`, `fix/`) carries a goal file defining its
   2. Read `.opencode/branch-goals/<branch>.md` if it exists
   3. If no goal file exists, ask the user what the goal is — do not assume
 - The branch goal is the ground truth for every Planner plan, Executor implementation, and Reviewer verdict: work that does not serve the branch goal should be challenged
+- Phase plans for the branch live in `.opencode/tmp/plans/<plan-id>.md` — see `.opencode/rules/006-plan-artifacts.md` (the plan ID is the cross-session handoff token)
 - If the user's request conflicts with the branch goal, surface the conflict and let the user decide
