@@ -108,7 +108,8 @@ struct MapScreenView: View {
                 if let analysis = tripPlanner.weatherAnalysis {
                     WeatherTimelineView(
                         stepWeathers: analysis.stepWeathers,
-                        overallRisk: analysis.overallRisk
+                        overallRisk: analysis.overallRisk,
+                        onRefresh: { tripPlanner.refreshIfNeeded() }
                     )
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
@@ -272,6 +273,13 @@ struct MapScreenView: View {
                         .position(x: point.x, y: point.y + 16)
                 }
             }
+            if stretches.isEmpty, let representative = representativeSegment(in: selected) {
+                if let midpoint = routeMidpoint(selected),
+                   let badgePoint = proxy.convert(midpoint, to: .local) {
+                    RainAnnotationBadge(rainChance: representative.rainChance, arrivalDate: representative.arrivalDate)
+                        .position(x: badgePoint.x, y: badgePoint.y + 16)
+                }
+            }
         }
     }
 
@@ -300,6 +308,14 @@ struct MapScreenView: View {
     private func routeMidpoint(_ route: RouteAlternative) -> CLLocationCoordinate2D? {
         guard !route.coordinatePoints.isEmpty else { return nil }
         return route.coordinatePoints[route.coordinatePoints.count / 2]
+    }
+
+    private func representativeSegment(in route: RouteAlternative) -> RainSegment? {
+        guard !route.rainSegments.isEmpty else { return nil }
+        let midpointDistance = route.distance / 2
+        return route.rainSegments.min {
+            abs($0.distanceFromStart - midpointDistance) < abs($1.distanceFromStart - midpointDistance)
+        }
     }
 
     private func refreshRainOverlays() {

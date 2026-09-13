@@ -11,8 +11,11 @@ struct RainAnnotationBadge: View {
     let rainChance: Double
     let arrivalDate: Date
 
-    private var band: RainBand {
-        RainBand(rainChance: rainChance)
+    private var rainRisk: RainRisk {
+        if rainChance < 0.25 { return .low }
+        if rainChance < 0.50 { return .moderate }
+        if rainChance < 0.75 { return .high }
+        return .veryHigh
     }
 
     private var timeText: String {
@@ -21,11 +24,11 @@ struct RainAnnotationBadge: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            Image(systemName: "cloud.rain.fill")
+            Image(systemName: rainRisk.icon)
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(.white)
 
-            Text("raining")
+            Text(rainRisk.label)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white.opacity(0.9))
 
@@ -42,7 +45,7 @@ struct RainAnnotationBadge: View {
         )
         .shadow(color: .black.opacity(0.3), radius: 6, y: 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Rain at \(timeText), \(Int(rainChance * 100)) percent chance")
+        .accessibilityLabel("\(rainRisk.label) at \(timeText), \(Int(rainChance * 100)) percent chance")
     }
 }
 
@@ -50,7 +53,7 @@ struct RainAnnotationBadge: View {
     let now = Date()
     HStack(spacing: 16) {
         RainAnnotationBadge(
-            rainChance: 0.72,
+            rainChance: 0.15,
             arrivalDate: now.addingTimeInterval(3600)
         )
         RainAnnotationBadge(

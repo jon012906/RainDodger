@@ -39,19 +39,17 @@ enum RainRisk: CaseIterable, Comparable {
 
     var label: String {
         switch self {
-        case .low: "Low"
-        case .moderate: "Moderate"
-        case .high: "High"
-        case .veryHigh: "Very high"
+        case .low: "Sunny"
+        case .moderate: "Light"
+        case .high, .veryHigh: "Raining"
         }
     }
 
     var icon: String {
         switch self {
-        case .low: "sun.max.fill"
-        case .moderate: "cloud.sun.fill"
-        case .high: "cloud.rain.fill"
-        case .veryHigh: "cloud.heavyrain.fill"
+        case .low: "cloud.sun"
+        case .moderate: "cloud.drizzle"
+        case .high, .veryHigh: "cloud.heavyrain"
         }
     }
 }

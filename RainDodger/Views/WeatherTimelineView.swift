@@ -3,6 +3,7 @@ import SwiftUI
 struct WeatherTimelineView: View {
     let stepWeathers: [RouteStepWeather]
     let overallRisk: RainRisk
+    var onRefresh: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -20,6 +21,9 @@ struct WeatherTimelineView: View {
             }
         }
         .padding(.vertical, 12)
+        .onAppear {
+            onRefresh?()
+        }
     }
 
     private var header: some View {
@@ -42,13 +46,11 @@ struct WeatherTimelineView: View {
     private var overallRiskSummary: String {
         switch overallRisk {
         case .low:
-            return "No significant rain expected"
+            return "Clear skies along your route"
         case .moderate:
-            return "Possible rain along the route"
-        case .high:
+            return "Light rain possible along the route"
+        case .high, .veryHigh:
             return "Rain expected along your route"
-        case .veryHigh:
-            return "Heavy rain expected along your route"
         }
     }
 

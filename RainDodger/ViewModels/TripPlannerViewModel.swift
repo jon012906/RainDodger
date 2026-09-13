@@ -42,9 +42,12 @@ final class TripPlannerViewModel {
     private let sampler = AdaptiveRouteSampler()
     private var planTask: Task<Void, Never>?
     private var weatherTask: Task<Void, Never>?
+    private var weatherRefreshTask: Task<Void, Never>?
+    private var lastWeatherRefresh: Date?
     private let maxAlternatives = 3
     private let currentLocationName = "Current location"
     private let weatherChunkSize = 8
+    private let weatherRefreshInterval: TimeInterval = 300
 
     init(directionsService: DirectionsService, weatherService: WeatherService) {
         self.directionsService = directionsService
@@ -240,6 +243,7 @@ final class TripPlannerViewModel {
                 )
                 self.weatherAnalysis = analysis
                 self.weatherState = .loaded
+                self.startWeatherRefresh()
             } catch {
                 guard !Task.isCancelled else { return }
                 self.weatherState = .unavailable
@@ -352,5 +356,76 @@ final class TripPlannerViewModel {
         planTask = nil
         weatherTask?.cancel()
         weatherTask = nil
+        stopWeatherRefresh()
+    }
+
+    func refreshIfNeeded() {
+        guard weatherState == .loaded else { return }
+        if let lastRefresh = lastWeatherRefresh,
+           Date().timeIntervalSince(lastRefresh) < 60 {
+            return
+        }
+        Task { await refreshWeather() }
+    }
+
+    private func startWeatherRefresh() {
+        stopWeatherRefresh()
+        weatherRefreshTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(self.weatherRefreshInterval))
+                guard !Task.isCancelled else { return }
+                await self.refreshWeather()
+            }
+        }
+    }
+
+    private func stopWeatherRefresh() {
+        weatherRefreshTask?.cancel()
+        weatherRefreshTask = nil
+    }
+
+    private func refreshWeather() async {
+        guard weatherState == .loaded,
+              let selectedID = selectedRouteID,
+              let plan = routePlan,
+              let alternative = plan.alternatives.first(where: { $0.id == selectedID }),
+              !alternative.rainSegments.isEmpty else { return }
+        do {
+            let forecastPoints = try await sampleForecast(for: alternative, departure: Date())
+            let segments = buildRainSegments(from: forecastPoints)
+            let analysis = RouteWeatherAnalyzer.analyze(
+                forecastPoints: forecastPoints,
+                steps: alternative.steps,
+                totalDistance: alternative.distance,
+                departure: Date()
+            )
+            routePlan = RoutePlan(
+                origin: plan.origin,
+                destination: plan.destination,
+                stop: plan.stop,
+                alternatives: plan.alternatives.map { alt in
+                    guard alt.id == alternative.id else { return alt }
+                    return RouteAlternative(
+                        id: alt.id,
+                        distance: alt.distance,
+                        travelTime: alt.travelTime,
+                        polyline: alt.polyline,
+                        coordinatePoints: alt.coordinatePoints,
+                        rainSegments: segments,
+                        steps: RainMetrics.mappedSteps(
+                            alt.steps,
+                            rainSegments: segments,
+                            totalDistance: alt.distance
+                        )
+                    )
+                },
+                selectedRouteID: plan.selectedRouteID
+            )
+            weatherAnalysis = analysis
+            lastWeatherRefresh = Date()
+        } catch {
+            // Silently fail — keep existing weather data
+        }
     }
 }
