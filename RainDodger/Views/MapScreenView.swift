@@ -16,6 +16,7 @@ struct MapScreenView: View {
     @State private var tripPlanner: TripPlannerViewModel
     @State private var rainOverlays: [RainOverlay] = []
     @State private var cameraPosition: MapCameraPosition = .userLocation(followsHeading: false, fallback: .automatic)
+    @State private var isWeatherTimelinePresented = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -103,6 +104,17 @@ struct MapScreenView: View {
                 )
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $isWeatherTimelinePresented) {
+                if let analysis = tripPlanner.weatherAnalysis {
+                    WeatherTimelineView(
+                        stepWeathers: analysis.stepWeathers,
+                        overallRisk: analysis.overallRisk,
+                        onRefresh: { tripPlanner.refreshIfNeeded() }
+                    )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
+            }
         }
         .onAppear(perform: viewModel.onAppear)
         .onDisappear(perform: viewModel.onDisappear)
@@ -175,16 +187,30 @@ struct MapScreenView: View {
     private func weatherStatusOverlay(stretches: [WetStretch]) -> some View {
         if let plan = tripPlanner.routePlan,
            !isTripPlanFailed,
-           let selected = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
+           let _ = plan.alternatives.first(where: { $0.id == plan.selectedRouteID }) ?? plan.alternatives.first {
             if tripPlanner.weatherUnavailable {
                 RainUnavailableBanner()
             } else if tripPlanner.weatherState == .loaded {
-                RainLegend(
-                    wetDistance: RainMetrics.wetDistance(for: selected),
-                    totalDistance: selected.distance,
-                    wetStretches: stretches,
-                    isDry: selected.rainSegments.isEmpty
-                )
+                if let analysis = tripPlanner.weatherAnalysis, !analysis.stepWeathers.isEmpty {
+                    Button {
+                        isWeatherTimelinePresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.caption)
+                            Text("Weather timeline")
+                                .font(.caption.weight(.medium))
+                        }
+                        .foregroundStyle(Color.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color(.systemBackground))
+                                .shadow(color: .black.opacity(0.2), radius: 4, y: 1)
+                        )
+                    }
+                }
             }
         }
     }
@@ -243,8 +269,15 @@ struct MapScreenView: View {
             }
             ForEach(Array(stretches.prefix(RainMetrics.maxWetStretchBadges))) { stretch in
                 if let point = proxy.convert(stretch.startCoordinate, to: .local) {
-                    RainTimeBadge(arrivalDate: stretch.arrivalDate)
-                        .position(x: point.x, y: point.y + 20)
+                    RainAnnotationBadge(rainChance: stretch.rainChance, arrivalDate: stretch.arrivalDate)
+                        .position(x: point.x, y: point.y + 16)
+                }
+            }
+            if stretches.isEmpty, let representative = representativeSegment(in: selected) {
+                if let midpoint = routeMidpoint(selected),
+                   let badgePoint = proxy.convert(midpoint, to: .local) {
+                    RainAnnotationBadge(rainChance: representative.rainChance, arrivalDate: representative.arrivalDate)
+                        .position(x: badgePoint.x, y: badgePoint.y + 16)
                 }
             }
         }
@@ -277,6 +310,14 @@ struct MapScreenView: View {
         return route.coordinatePoints[route.coordinatePoints.count / 2]
     }
 
+    private func representativeSegment(in route: RouteAlternative) -> RainSegment? {
+        guard !route.rainSegments.isEmpty else { return nil }
+        let midpointDistance = route.distance / 2
+        return route.rainSegments.min {
+            abs($0.distanceFromStart - midpointDistance) < abs($1.distanceFromStart - midpointDistance)
+        }
+    }
+
     private func refreshRainOverlays() {
         guard tripPlanner.weatherState == .loaded, let plan = tripPlanner.routePlan else {
             rainOverlays = []
@@ -296,20 +337,46 @@ struct MapScreenView: View {
         guard !segments.isEmpty, points.count > 1 else { return [] }
         let cumulative = cumulativeDistances(of: points)
         let total = cumulative.last ?? 0
-        return segments.enumerated().compactMap { index, segment in
-            let startDistance = segment.distanceFromStart
-            let endDistance = index + 1 < segments.count ? segments[index + 1].distanceFromStart : total
+        let aggregated = aggregateSegments(segments, totalDistance: total)
+        var overlays: [RainOverlay] = []
+        for group in aggregated {
+            guard let first = group.first, let last = group.last else { continue }
+            let startDistance = first.distanceFromStart
+            let lastIdx = last.index
+            let endDistance = lastIdx + 1 < segments.count ? segments[lastIdx + 1].distanceFromStart : total
             let startIndex = cumulative.firstIndex { $0 >= startDistance } ?? 0
             let endIndex = min(
                 points.count - 1,
                 max(cumulative.lastIndex { $0 <= endDistance } ?? 0, startIndex + 1)
             )
-            guard endIndex >= startIndex else { return nil }
-            let slice = Array(points[startIndex...endIndex])
-            guard slice.count > 1 else { return nil }
+            guard endIndex >= startIndex else { continue }
+            let endIdx = endDistance >= total - 1 ? points.count - 1 : endIndex
+            let slice = Array(points[startIndex...endIdx])
+            guard slice.count > 1 else { continue }
             let polyline = MKPolyline(coordinates: slice, count: slice.count)
-            return RainOverlay(polyline: polyline, color: RainBand(rainChance: segment.rainChance).color)
+            let maxChance = group.map(\.rainChance).max() ?? 0
+            overlays.append(RainOverlay(polyline: polyline, color: RainBand(rainChance: maxChance).color))
         }
+        return overlays
+    }
+
+    private func aggregateSegments(_ segments: [RainSegment], totalDistance: CLLocationDistance) -> [[RainSegment]] {
+        guard !segments.isEmpty else { return [] }
+        var groups: [[RainSegment]] = []
+        var currentGroup: [RainSegment] = [segments[0]]
+        for segment in segments.dropFirst() {
+            guard let lastInGroup = currentGroup.last else { continue }
+            let prevBand = RainBand(rainChance: lastInGroup.rainChance)
+            let thisBand = RainBand(rainChance: segment.rainChance)
+            if prevBand == thisBand {
+                currentGroup.append(segment)
+            } else {
+                groups.append(currentGroup)
+                currentGroup = [segment]
+            }
+        }
+        groups.append(currentGroup)
+        return groups
     }
 
     private func cumulativeDistances(of points: [CLLocationCoordinate2D]) -> [CLLocationDistance] {
@@ -415,26 +482,6 @@ private struct RainOverlay: Identifiable {
     let id = UUID()
     let polyline: MKPolyline
     let color: Color
-}
-
-private struct RainTimeBadge: View {
-    let arrivalDate: Date
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "cloud.rain.fill")
-                .font(.headline)
-            Text(arrivalDate.formatted(Date.FormatStyle(date: .omitted, time: .shortened)))
-                .font(.headline)
-                .lineLimit(1)
-        }
-        .foregroundStyle(Color.primary)
-        .padding(.horizontal, 12)
-        .frame(minHeight: 36)
-        .background(Capsule().fill(Color(.systemBackground)))
-        .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
-        .accessibilityHidden(true)
-    }
 }
 
 private struct RainUnavailableBanner: View {

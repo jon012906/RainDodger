@@ -46,6 +46,15 @@ struct RouteCard: View {
                 Text(distanceText)
                     .font(.rdRowStreet)
                     .foregroundStyle(Color.secondary)
+                if let risk = routeRainRisk {
+                    HStack(spacing: 4) {
+                        Image(systemName: risk.icon)
+                            .font(.caption2)
+                        Text("\(risk.label) rain risk")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(risk.color)
+                }
                 if isSelected, let arrivalText {
                     Text(arrivalText)
                         .font(.rdRowStreet)
@@ -84,6 +93,19 @@ struct RouteCard: View {
         return "\(Int(alternative.distance / 1000)) km"
     }
 
+    private var routeRainRisk: RainRisk? {
+        guard !alternative.rainSegments.isEmpty else { return nil }
+        let maxChance = alternative.rainSegments.map(\.rainChance).max() ?? 0
+        let avgChance = alternative.rainSegments.map(\.rainChance).reduce(0, +) / Double(alternative.rainSegments.count)
+        let combined = maxChance * 0.6 + avgChance * 0.4
+        switch combined {
+        case ..<0.25: return .low
+        case ..<0.50: return .moderate
+        case ..<0.75: return .high
+        default: return .veryHigh
+        }
+    }
+
     private var accessibilityLabel: String {
         let distance: String
         if alternative.distance < 1000 {
@@ -97,7 +119,13 @@ struct RouteCard: View {
         } else {
             arrival = ""
         }
-        return "Route \(index + 1), \(Int(alternative.travelTime / 60)) minutes, \(distance)\(arrival), \(isSelected ? "selected" : "not selected")"
+        let risk: String
+        if let r = routeRainRisk {
+            risk = ", \(r.label) rain risk"
+        } else {
+            risk = ""
+        }
+        return "Route \(index + 1), \(Int(alternative.travelTime / 60)) minutes, \(distance)\(arrival)\(risk), \(isSelected ? "selected" : "not selected")"
     }
 
     private var backing: Color {

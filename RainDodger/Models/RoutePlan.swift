@@ -185,11 +185,19 @@ enum RainMetrics {
             let midpoint = (step.distanceFromStart + end) / 2
             let representative = inRange.map(\.rainChance).max()
                 ?? nearestRainChance(to: midpoint, in: rainSegments)
+            let arrival = inRange.first?.arrivalDate ?? nearestArrivalDate(to: midpoint, in: rainSegments)
             var mapped = step
             mapped.rainChance = representative
             mapped.wet = (representative ?? 0) >= wetThreshold
+            mapped.arrivalDate = arrival
             return mapped
         }
+    }
+
+    private static func nearestArrivalDate(to distance: CLLocationDistance, in segments: [RainSegment]) -> Date? {
+        segments.min {
+            abs($0.distanceFromStart - distance) < abs($1.distanceFromStart - distance)
+        }?.arrivalDate
     }
 
     private static func nearestRainChance(to distance: CLLocationDistance, in segments: [RainSegment]) -> Double? {
