@@ -18,12 +18,11 @@ enum AuthorizationState: Equatable {
 
 enum CameraIntent: Equatable {
     case recenter
-    case resetNorthAndRecenter
     case focusDestination(CLLocationCoordinate2D)
 
     static func == (lhs: CameraIntent, rhs: CameraIntent) -> Bool {
         switch (lhs, rhs) {
-        case (.recenter, .recenter), (.resetNorthAndRecenter, .resetNorthAndRecenter):
+        case (.recenter, .recenter):
             return true
         case let (.focusDestination(a), .focusDestination(b)):
             return a.latitude == b.latitude && a.longitude == b.longitude
@@ -44,11 +43,13 @@ final class MapViewModel {
     private(set) var locationErrorMessage: String?
     private(set) var selectedDestination: SearchResult?
     private(set) var currentCoordinate: CLLocationCoordinate2D?
+    private(set) var isHeadingLocked = false
     var isSearchPresented = false
     var isTripSheetPresented = false
 
     private var locationTask: Task<Void, Never>?
     private var headingTask: Task<Void, Never>?
+    private var locationStreamTask: Task<Void, Never>?
     private var smoothedHeading: CLLocationDirection?
     private let headingSmoothingFactor = 0.2
 
@@ -70,14 +71,22 @@ final class MapViewModel {
         locationTask = nil
         headingTask?.cancel()
         headingTask = nil
+        locationStreamTask?.cancel()
+        locationStreamTask = nil
     }
 
     func recenter() {
+        isHeadingLocked = false
         cameraIntent = .recenter
     }
 
-    func resetNorthAndRecenter() {
-        cameraIntent = .resetNorthAndRecenter
+    func toggleHeadingLock() {
+        isHeadingLocked.toggle()
+    }
+
+    func syncFollowHeading(_ following: Bool) {
+        guard isHeadingLocked != following else { return }
+        isHeadingLocked = following
     }
 
     func consumeCameraIntent() {
@@ -135,6 +144,11 @@ final class MapViewModel {
                 await self?.consumeHeadingUpdates()
             }
         }
+        if locationStreamTask == nil {
+            locationStreamTask = Task { [weak self] in
+                await self?.consumeLocationUpdates()
+            }
+        }
     }
 
     private func stopLocationAndHeading() {
@@ -142,6 +156,8 @@ final class MapViewModel {
         locationTask = nil
         headingTask?.cancel()
         headingTask = nil
+        locationStreamTask?.cancel()
+        locationStreamTask = nil
     }
 
     private func fetchCurrentLocation() async {
@@ -164,6 +180,13 @@ final class MapViewModel {
         for await sample in stream {
             guard let acceptedHeading = acceptHeadingSample(sample) else { continue }
             heading = acceptedHeading
+        }
+    }
+
+    private func consumeLocationUpdates() async {
+        for await location in locationService.locationUpdates() {
+            currentCoordinate = location.coordinate
+            locationErrorMessage = nil
         }
     }
 

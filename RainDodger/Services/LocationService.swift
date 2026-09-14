@@ -26,6 +26,7 @@ protocol LocationService: AnyObject {
     func authorizationStatus() async -> CLAuthorizationStatus
     func requestWhenInUseAuthorization() async -> CLAuthorizationStatus
     func currentLocation() async throws -> CLLocation
+    func locationUpdates() -> AsyncStream<CLLocation>
     func headingUpdates() -> AsyncStream<CLLocationDirection>
 }
 
@@ -36,6 +37,7 @@ final class LiveLocationService: NSObject, LocationService, CLLocationManagerDel
     private var locationContinuation: CheckedContinuation<CLLocation, Error>?
     private var locationTimeoutTask: Task<Void, Never>?
     private var headingContinuation: AsyncStream<CLLocationDirection>.Continuation?
+    private var locationStreamContinuation: AsyncStream<CLLocation>.Continuation?
 
     override init() {
         super.init()
@@ -86,18 +88,34 @@ final class LiveLocationService: NSObject, LocationService, CLLocationManagerDel
         }
     }
 
+    func locationUpdates() -> AsyncStream<CLLocation> {
+        AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            locationStreamContinuation = continuation
+            manager.startUpdatingLocation()
+            continuation.onTermination = { @Sendable [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.stopLocationUpdates()
+                }
+            }
+        }
+    }
+
     private func reportLocationTimeout() {
         guard let continuation = locationContinuation else { return }
         locationContinuation = nil
         locationTimeoutTask = nil
-        manager.stopUpdatingLocation()
+        if locationStreamContinuation == nil {
+            manager.stopUpdatingLocation()
+        }
         continuation.resume(throwing: LocationError.locationUnavailable)
     }
 
     private func finishLocationFetch(with result: Result<CLLocation, Error>) {
         locationTimeoutTask?.cancel()
         locationTimeoutTask = nil
-        manager.stopUpdatingLocation()
+        if locationStreamContinuation == nil {
+            manager.stopUpdatingLocation()
+        }
         guard let continuation = locationContinuation else { return }
         locationContinuation = nil
         continuation.resume(with: result)
@@ -107,6 +125,12 @@ final class LiveLocationService: NSObject, LocationService, CLLocationManagerDel
         headingContinuation?.finish()
         headingContinuation = nil
         manager.stopUpdatingHeading()
+    }
+
+    private func stopLocationUpdates() {
+        locationStreamContinuation?.finish()
+        locationStreamContinuation = nil
+        manager.stopUpdatingLocation()
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -122,6 +146,7 @@ final class LiveLocationService: NSObject, LocationService, CLLocationManagerDel
         MainActor.assumeIsolated { [weak self] in
             guard let self, let location = locations.last else { return }
             guard location.horizontalAccuracy >= 0 else { return }
+            self.locationStreamContinuation?.yield(location)
             self.finishLocationFetch(with: .success(location))
         }
     }
@@ -176,6 +201,25 @@ final class MockLocationService: LocationService {
                 while !Task.isCancelled {
                     continuation.yield(self.headingSequence[index % self.headingSequence.count])
                     index += 1
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
+            continuation.onTermination = { @Sendable _ in
+                generator.cancel()
+            }
+        }
+    }
+
+    func locationUpdates() -> AsyncStream<CLLocation> {
+        let base = coordinate
+        return AsyncStream { continuation in
+            let generator = Task { @MainActor in
+                continuation.yield(CLLocation(latitude: base.latitude, longitude: base.longitude))
+                for step in 1...4 {
+                    try? await Task.sleep(for: .seconds(1))
+                    continuation.yield(CLLocation(latitude: base.latitude + 0.0004 * Double(step), longitude: base.longitude))
+                }
+                while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(1))
                 }
             }

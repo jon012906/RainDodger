@@ -1,15 +1,15 @@
 # Design — Maps Screen
 
-Reference screenshot (Google Maps, iOS): a full-screen map. Bottom center: a floating rounded-capsule search bar — magnifier icon on the left, placeholder "Your Destination…", mic icon and avatar button on the right. Top-trailing: two floating circular buttons stacked — a dark circle with a white compass (cardinal letters N/E/S/W, rotates with device heading, always visible), and a white circle with a dark location arrow (recenter) below it. A blue user-location dot sits at the center on the map.
+Reference screenshot (Google Maps, iOS): a full-screen map. Bottom center: a floating rounded-capsule search bar — magnifier icon on the left, placeholder "Your Destination…", mic icon and avatar button on the right. Top-trailing: two floating circular buttons stacked — a dark circle with a white compass (cardinal letters N/E/S/W, rotates with device heading, always visible), and a white circle with a dark location arrow (recenter) below it. A blue user-location dot sits at the center on the map. *(This preamble describes the Google Maps reference screenshot, not the app's shipped UI — the shipped compass/blue-dot concepts are superseded by `docs/designs/navigation-heading.md`, feat/navigation-icon.)*
 
 ## 1. Screens
 
 The feature is a single main screen with these states:
 
-- **Loading:** map renders immediately (system tiles); no blue dot or controls until the first heading/location arrives.
+- **Loading:** map renders immediately (system tiles); no head arrow or controls until the first heading/location arrives (arrow **supersedes** the blue dot — see `docs/designs/navigation-heading.md`).
 - **Permission requested (system):** native iOS when-in-use prompt appears over the map; app shows the map beneath it.
 - **Denied:** in-app overlay on the map — explanatory text ("Rain Dodger needs your location to recenter the map") + Open Settings button.
-- **Loaded:** full-screen map, blue user dot, bottom search capsule, bottom-trailing recenter button drawn above the bottom bar (compass out of scope this branch).
+- **Loaded:** full-screen map, head arrow at the user's location (the blue dot and custom compass are **superseded** by `docs/designs/navigation-heading.md`, feat/navigation-icon), bottom search capsule, bottom-trailing recenter button drawn above the bottom bar.
 - **Cleared/empty:** after a destination clear from the route-summary pill X (trip-planner R17) or the trip planner destination-row X (trip-planner R18), the map returns to the empty/search state — `DestinationSearchField` ("Your Destination…") visible, no destination pin, no route polyline, no rain overlays/legend/badges; the camera returns to the rider's location. Origin/stop/departure stay retained in the trip planner for the next pick.
 - **Search entry:** tapping the search capsule opens the destination search page (see `docs/designs/search.md`).
 
@@ -21,8 +21,8 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 - **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → opens the search page.
 - **Control stack:** the recenter button floats bottom-trailing, above the map and drawn ON TOP of / above the bottom bar (the search field when no route is planned, or the route-summary pill when the trip sheet is dismissed) — never behind or underneath it. It sits ~80 pt above the bottom safe-area inset in portrait, and ~76 pt above the inset in landscape (where the bar is full-width), so it clears the bar in both orientations. White circle with a dark location arrow; 44 pt+.
 - **Route-summary pill X:** when the trip sheet is dismissed and the pill is shown, the pill carries a trailing X (≥ 44 pt, `Color.primary` glyph on the solid pill backing) that clears the destination and returns the map to the cleared/empty state (trip-planner R17). The X is a separate target from the pill body — tapping it never reopens the sheet.
-- **Compass:** **out of scope this branch** — `CompassControl` stays commented out in `MapScreenView` and is not rendered. When re-enabled: always visible; dial rotates with device heading so the cardinal letter for the current heading sits at the top marker (N → E → S → W); tap → north-up + recenter.
-- **Blue dot:** centered on the user's location via `UserAnnotation` (no cone this branch).
+- **Compass:** **superseded** (feat/navigation-icon) — the custom `CompassControl` is replaced by the custom gyro compass (`MapCompassOverlay`/`NeedleView` private structs in `MapScreenView.swift`) at the top of the bottom-trailing control stack (**always visible**, needle = phone heading, decorative, not tappable) plus the heading-lock button; see `docs/designs/navigation-heading.md`.
+- **Blue dot:** **superseded** (feat/navigation-icon) — replaced by the head arrow at the live coordinate (`HeadingArrowView`); see `docs/designs/navigation-heading.md`.
 - **Denied overlay:** full-map coverage with dark translucent scrim + solid card: heading, explanation, Open Settings button.
 
 **Landscape (mounted):** the phone sits in landscape on the bike mount — both orientations must work (004 §4.7):
@@ -35,7 +35,7 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 
 - **MapScreenView** — composes the `Map`, overlays controls, owns the `MapViewModel`.
 - **DestinationSearchField** — the bottom capsule (magnifier, "Your Destination…", mic, avatar); tap → opens `SearchPage` (see `docs/designs/search.md`).
-- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; **out of scope this branch** (commented out in `MapScreenView`, not rendered); when re-enabled: always visible; tap → north-up + recenter.
+- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; **deleted** (feat/navigation-icon) — replaced by the custom gyro compass (`MapCompassOverlay`/`NeedleView` in `MapScreenView.swift`); see `docs/designs/navigation-heading.md`.
 - **RecenterButton** — white circle, dark location arrow; pans camera to user location. Positioned bottom-trailing and drawn above the bottom bar (search field or route-summary pill), lifted ~80 pt above the bottom safe-area inset in portrait (~76 pt in landscape where the bar is full-width).
 - **LocationPermissionOverlay** — denied state: explanation + Open Settings (44 pt).
 - **SearchPage** — destination search page as a modal sheet; components in `docs/designs/search.md`.
@@ -46,9 +46,9 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 - Map keeps the standard MapKit style in both modes.
 - Floating controls get **solid backings** (no translucency) so they contrast over map content:
   - Capsule: `Color(.systemBackground)` light / `Color(.secondarySystemBackground)` dark.
-  - Compass: dark circle `#1C1C1E` in both modes with white cardinal letters (N bold white, E/S/W white at 72%) + white top marker.
+  - Compass: dark circle `#1C1C1E` in both modes with white cardinal letters (N bold white, E/S/W white at 72%) + white top marker — **superseded** (feat/navigation-icon): the dial's tokens die with `CompassControl`; the custom gyro compass uses white circle + gray ring + red needle + near-black N (see `docs/designs/navigation-heading.md` §4).
   - Recenter: white circle in both modes with near-black (`#1C1C1E`) location arrow.
-- Compass letters and marker stay ≥ 3:1 against the dark backing in both modes.
+- Compass letters and marker stay ≥ 3:1 against the dark backing in both modes (superseded with the dial — see `docs/designs/navigation-heading.md` §4).
 - Text in the capsule: `Color.primary`, placeholder `Color.secondary` — ≥ 4.5:1 on the solid backing.
 - Denied overlay scrim: `Color.black.opacity(0.6)` both modes; card solid.
 
@@ -58,19 +58,19 @@ Per `.opencode/rules/004-accessibility.md`:
 
 - VoiceOver labels (exact):
   - Search capsule: **"Your destination field"** (hint: "Double tap to search", placeholder announces "Your Destination…").
-  - Compass: **"Compass"** (value: current cardinal + degrees, e.g. "North, 0 degrees"; hint: "Double tap to reset to north and recenter").
+  - Compass: **superseded** — the custom dial's VO is gone with `CompassControl`; the custom gyro compass is decorative (a11y-hidden) and the lock button carries its own label (see `docs/designs/navigation-heading.md` §5).
   - Recenter: **"Recenter to my location"**.
   - Route-summary pill X (when the pill is shown): **"Clear destination"** (hint: "Double tap to clear the destination and return to search"); clearing announces **"Destination cleared"** once.
 - All interactive targets ≥ 44 × 44 pt; capsule component and control stack use system spacing plus generous padding.
 - Dynamic Type: "Your Destination…" uses `.title3`-scale system text that scales; capsule height grows with text size.
-- Reduce Motion: compass dial static (no rotation animation); map camera recenter still animates only for distance (compass tap uses default camera; see §6).
+- Reduce Motion: compass dial static (no rotation animation) — superseded with the deleted `CompassControl`; the arrow/lock motion rules live in `docs/designs/navigation-heading.md` §6. Map camera recenter still animates only for distance.
 - Contrast: solid backings per §4 guarantee 4.5:1 text / 3:1 graphics in light and dark; map contents do not carry app-critical info (dot + controls only).
 - Mock service in previews lets VoiceOver users exercise every state.
 
 ## 6. Motion / Haptics
 
-- **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change.
-- **Reduce Motion:** dial repositions instantly, no animation; the search page uses the system sheet transition.
+- **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change. **Superseded** (feat/navigation-icon) — `CompassControl` deleted; the compass needle's 0.2 s eased rotation + instant Reduce Motion live in `docs/designs/navigation-heading.md` §6.
+- **Reduce Motion:** dial repositions instantly, no animation (superseded with the dial); the search page uses the system sheet transition.
 - **Recenter:** default SwiftUI `Map` camera move (no custom animation); no follow-heading mode.
 - **Clear destination:** on a clear the camera returns to the rider's location (default system camera move); **Reduce Motion** → instant recenter, no animation. No custom transition on the pin/route/rain overlays being removed, and no haptics.
 - **No haptics required this branch** (deferred — no ride start, no warnings yet).

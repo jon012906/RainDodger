@@ -140,12 +140,12 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 
 | Field | Current branch value |
 |---|---|
-| Branch | `fix/clear-destination` |
-| Feature folders (files this branch owns/adds) | `docs/specs/trip-planner.md` · `docs/designs/trip-planner.md` · `docs/flows/trip-planner.md` · `docs/specs/maps-screen.md` · `docs/designs/maps-screen.md` · `docs/flows/maps-screen.md` · `docs/specs/weather-forecast.md` · `docs/designs/weather-forecast.md` · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
+| Branch | `feat/navigation-icon` |
+| Feature folders (files this branch owns/adds) | `docs/specs/navigation-heading.md` · `docs/designs/navigation-heading.md` · `docs/flows/navigation-heading.md` (new) · `docs/specs/maps-screen.md` · `docs/designs/maps-screen.md` · `docs/flows/maps-screen.md` (amended — R2 blue dot / R4 custom compass superseded) · `docs/implementation.md` · `docs/template/spec-guide.md §9` |
 | Models | — (no changes this branch) |
-| Services | — (no changes this branch) |
-| ViewModels | `RainDodger/ViewModels/TripPlannerViewModel.swift` · `RainDodger/ViewModels/MapViewModel.swift` (modified — clear-destination reset: `destination`/`routePlan`/`selectedRouteID` → nil, `state`/`weatherState` → `.idle`, cancel in-flight plan/weather tasks, `selectedDestination` → nil) |
-| Views | `RainDodger/Views/RouteSummaryPill.swift` · `RainDodger/Views/TripPlannerSheet.swift` · `RainDodger/Views/MapScreenView.swift` (modified — trailing clear X on the pill and the destination row, ≥ 44 pt, return to the empty search state; no new files, pbxproj untouched) |
+| Services | `RainDodger/Services/LocationService.swift` (modified — `locationUpdates() -> AsyncStream<CLLocation>` on the protocol, Live + Mock) |
+| ViewModels | `RainDodger/ViewModels/MapViewModel.swift` (modified — `isHeadingLocked` / `toggleHeadingLock()` / `syncFollowHeading(_:)`, location-stream task, `recenter()` clears the lock; `CameraIntent.resetNorthAndRecenter` removed in N3) |
+| Views | `RainDodger/Views/MapScreenView.swift` (modified — head arrow annotation, custom gyro compass (`MapCompassOverlay`/`NeedleView` private structs) at the top of the bottom-trailing control stack, heading-lock button, camera-heading tracking) · `RainDodger/Views/HeadingArrowView.swift` + `RainDodger/Views/HeadingLockButton.swift` (new) · `RainDodger/Views/CompassControl.swift` (deleted) |
 | Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 
