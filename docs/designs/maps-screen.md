@@ -21,7 +21,7 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 - **Search capsule:** floating bottom-center, above the map, inset from safe areas. Content: magnifier · "Your Destination…" placeholder · mic · avatar. Whole capsule is a single 44 pt+ tap target → opens the search page.
 - **Control stack:** the recenter button floats bottom-trailing, above the map and drawn ON TOP of / above the bottom bar (the search field when no route is planned, or the route-summary pill when the trip sheet is dismissed) — never behind or underneath it. It sits ~80 pt above the bottom safe-area inset in portrait, and ~76 pt above the inset in landscape (where the bar is full-width), so it clears the bar in both orientations. White circle with a dark location arrow; 44 pt+.
 - **Route-summary pill X:** when the trip sheet is dismissed and the pill is shown, the pill carries a trailing X (≥ 44 pt, `Color.primary` glyph on the solid pill backing) that clears the destination and returns the map to the cleared/empty state (trip-planner R17). The X is a separate target from the pill body — tapping it never reopens the sheet.
-- **Compass:** **superseded** (feat/navigation-icon) — the custom `CompassControl` is replaced by the built-in MapKit `MapCompass` via `.mapControls` (native top-trailing, **auto-hides when north-up** — never forced always-visible) plus the heading-lock button; see `docs/designs/navigation-heading.md`.
+- **Compass:** **superseded** (feat/navigation-icon) — the custom `CompassControl` is replaced by the custom gyro compass (`MapCompassOverlay`/`NeedleView` private structs in `MapScreenView.swift`) at the top of the bottom-trailing control stack (**always visible**, needle = phone heading, decorative, not tappable) plus the heading-lock button; see `docs/designs/navigation-heading.md`.
 - **Blue dot:** **superseded** (feat/navigation-icon) — replaced by the head arrow at the live coordinate (`HeadingArrowView`); see `docs/designs/navigation-heading.md`.
 - **Denied overlay:** full-map coverage with dark translucent scrim + solid card: heading, explanation, Open Settings button.
 
@@ -35,7 +35,7 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 
 - **MapScreenView** — composes the `Map`, overlays controls, owns the `MapViewModel`.
 - **DestinationSearchField** — the bottom capsule (magnifier, "Your Destination…", mic, avatar); tap → opens `SearchPage` (see `docs/designs/search.md`).
-- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; **deleted** (feat/navigation-icon) — replaced by the built-in MapKit `MapCompass`; see `docs/designs/navigation-heading.md`.
+- **CompassControl** — dark circle with rotating cardinal letters (N emphasized) + fixed top marker; **deleted** (feat/navigation-icon) — replaced by the custom gyro compass (`MapCompassOverlay`/`NeedleView` in `MapScreenView.swift`); see `docs/designs/navigation-heading.md`.
 - **RecenterButton** — white circle, dark location arrow; pans camera to user location. Positioned bottom-trailing and drawn above the bottom bar (search field or route-summary pill), lifted ~80 pt above the bottom safe-area inset in portrait (~76 pt in landscape where the bar is full-width).
 - **LocationPermissionOverlay** — denied state: explanation + Open Settings (44 pt).
 - **SearchPage** — destination search page as a modal sheet; components in `docs/designs/search.md`.
@@ -46,7 +46,7 @@ Offline/error of map tiles is handled by MapKit's standard behavior — no custo
 - Map keeps the standard MapKit style in both modes.
 - Floating controls get **solid backings** (no translucency) so they contrast over map content:
   - Capsule: `Color(.systemBackground)` light / `Color(.secondarySystemBackground)` dark.
-  - Compass: dark circle `#1C1C1E` in both modes with white cardinal letters (N bold white, E/S/W white at 72%) + white top marker — **superseded** (feat/navigation-icon): the dial's tokens die with `CompassControl`; the built-in `MapCompass` is system-rendered (see `docs/designs/navigation-heading.md` §4).
+  - Compass: dark circle `#1C1C1E` in both modes with white cardinal letters (N bold white, E/S/W white at 72%) + white top marker — **superseded** (feat/navigation-icon): the dial's tokens die with `CompassControl`; the custom gyro compass uses white circle + gray ring + red needle + near-black N (see `docs/designs/navigation-heading.md` §4).
   - Recenter: white circle in both modes with near-black (`#1C1C1E`) location arrow.
 - Compass letters and marker stay ≥ 3:1 against the dark backing in both modes (superseded with the dial — see `docs/designs/navigation-heading.md` §4).
 - Text in the capsule: `Color.primary`, placeholder `Color.secondary` — ≥ 4.5:1 on the solid backing.
@@ -58,7 +58,7 @@ Per `.opencode/rules/004-accessibility.md`:
 
 - VoiceOver labels (exact):
   - Search capsule: **"Your destination field"** (hint: "Double tap to search", placeholder announces "Your Destination…").
-  - Compass: **superseded** — the custom dial's VO is gone with `CompassControl`; the built-in `MapCompass` and the new lock button carry their own labels (see `docs/designs/navigation-heading.md` §5).
+  - Compass: **superseded** — the custom dial's VO is gone with `CompassControl`; the custom gyro compass is decorative (a11y-hidden) and the lock button carries its own label (see `docs/designs/navigation-heading.md` §5).
   - Recenter: **"Recenter to my location"**.
   - Route-summary pill X (when the pill is shown): **"Clear destination"** (hint: "Double tap to clear the destination and return to search"); clearing announces **"Destination cleared"** once.
 - All interactive targets ≥ 44 × 44 pt; capsule component and control stack use system spacing plus generous padding.
@@ -69,7 +69,7 @@ Per `.opencode/rules/004-accessibility.md`:
 
 ## 6. Motion / Haptics
 
-- **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change. **Superseded** (feat/navigation-icon) — `CompassControl` deleted; the arrow's 0.2 s rotation + instant Reduce Motion live in `docs/designs/navigation-heading.md` §6.
+- **Compass dial:** eased rotation (shortest-arc), ~0.2 s smooth curve on heading change. **Superseded** (feat/navigation-icon) — `CompassControl` deleted; the compass needle's 0.2 s eased rotation + instant Reduce Motion live in `docs/designs/navigation-heading.md` §6.
 - **Reduce Motion:** dial repositions instantly, no animation (superseded with the dial); the search page uses the system sheet transition.
 - **Recenter:** default SwiftUI `Map` camera move (no custom animation); no follow-heading mode.
 - **Clear destination:** on a clear the camera returns to the rider's location (default system camera move); **Reduce Motion** → instant recenter, no animation. No custom transition on the pin/route/rain overlays being removed, and no haptics.

@@ -6,8 +6,8 @@
 |---|---|---|
 | Spec | `docs/specs/maps-screen.md` | Requirements, data (no models), rules, constraints, acceptance criteria |
 | Design | `docs/designs/maps-screen.md` | Screens, layout, components, accessibility, motion |
-| Spec | `docs/specs/navigation-heading.md` | Supersedes R2/R4 of this spec (feat/navigation-icon) — head arrow, built-in compass, heading lock |
-| Design | `docs/designs/navigation-heading.md` | Compass/blue-dot design superseded — arrow, lock button, built-in compass |
+| Spec | `docs/specs/navigation-heading.md` | Supersedes R2/R4 of this spec (feat/navigation-icon) — head arrow, custom gyro compass, heading lock |
+| Design | `docs/designs/navigation-heading.md` | Compass/blue-dot design superseded — arrow, lock button, custom gyro compass |
 | Flow | `docs/flows/navigation-heading.md` | The heading/compass/lock journey (replaces steps 4, 7–10 below) |
 
 ## 2. Flow Goal
@@ -51,9 +51,9 @@
 4. **Superseded (R4 → `docs/flows/navigation-heading.md`):** heading + location streams now start on authorize and stop on disappear for the head arrow and lock state; this step is kept as history.
 5. Rider pans and zooms the map with standard gestures (R1).
 6. Rider taps the recenter button → camera returns to user location (R3).
-7. **Superseded (R4 → `docs/flows/navigation-heading.md`):** the custom compass dial, its rotation, and the compass-tap reset now live in the navigation-heading flow (built-in `MapCompass` + heading-lock button); this step is kept as history.
+7. **Superseded (R4 → `docs/flows/navigation-heading.md`):** the custom compass dial and its rotation now live in the navigation-heading flow (custom gyro compass — always visible, needle = phone heading, decorative — + heading-lock button); this step is kept as history.
 8. **Superseded (R4 → `docs/flows/navigation-heading.md`):** `trueHeading`/`magneticHeading` selection and the ≥ 180° outlier drop now feed the head arrow's rotation; this step is kept as history.
-9. **Superseded (R4 → `docs/flows/navigation-heading.md`):** the compass-tap north-up + recenter reset is the built-in compass's system behavior; this step is kept as history.
+9. **Superseded (R4 → `docs/flows/navigation-heading.md`):** the compass-tap north-up + recenter reset is gone — the custom gyro compass is not tappable; reorient happens via `RecenterButton` / unlocking; this step is kept as history.
 10. **Superseded (R4 → `docs/flows/navigation-heading.md`):** heading updates stop on disappear — now location + heading streams stop on disappear; this step is kept as history.
 11. Rider taps the search capsule → destination search page opens (R5, R8).
 12. After a destination is cleared from the route-summary pill X or the trip planner destination-row X (trip-planner R17/R18), the map returns to the empty/search state: `DestinationSearchField` ("Your Destination…") visible, no destination pin/route/rain overlays, camera at the rider's location (R9).

@@ -145,7 +145,7 @@ This section identifies the file locations of the CURRENT branch and is rewritte
 | Models | — (no changes this branch) |
 | Services | `RainDodger/Services/LocationService.swift` (modified — `locationUpdates() -> AsyncStream<CLLocation>` on the protocol, Live + Mock) |
 | ViewModels | `RainDodger/ViewModels/MapViewModel.swift` (modified — `isHeadingLocked` / `toggleHeadingLock()` / `syncFollowHeading(_:)`, location-stream task, `recenter()` clears the lock; `CameraIntent.resetNorthAndRecenter` removed in N3) |
-| Views | `RainDodger/Views/MapScreenView.swift` (modified — head arrow annotation, `.mapControls { MapCompass() }`, heading-lock button, camera-heading tracking) · `RainDodger/Views/HeadingArrowView.swift` + `RainDodger/Views/HeadingLockButton.swift` (new) · `RainDodger/Views/CompassControl.swift` (deleted) |
+| Views | `RainDodger/Views/MapScreenView.swift` (modified — head arrow annotation, custom gyro compass (`MapCompassOverlay`/`NeedleView` private structs) at the top of the bottom-trailing control stack, heading-lock button, camera-heading tracking) · `RainDodger/Views/HeadingArrowView.swift` + `RainDodger/Views/HeadingLockButton.swift` (new) · `RainDodger/Views/CompassControl.swift` (deleted) |
 | Entry point files | `RainDodger/ContentView.swift` |
 | Build/verify target | `RainDodger.xcodeproj` (scheme `RainDodger`) |
 
