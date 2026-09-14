@@ -77,6 +77,7 @@ struct MapScreenView: View {
             }
             .overlay(alignment: .bottomTrailing) {
                 VStack(spacing: 12) {
+                    MapCompassOverlay(heading: viewModel.heading)
                     RecenterButton(onRecenter: viewModel.recenter)
                     HeadingLockButton(isLocked: viewModel.isHeadingLocked, onToggle: lockHeadingTapped)
                 }
@@ -268,9 +269,6 @@ struct MapScreenView: View {
                 }
             }
             .mapStyle(.standard)
-            .mapControls {
-                MapCompass()
-            }
             .onMapCameraChange(frequency: .continuous) { context in
                 cameraHeading = context.camera.heading
             }
@@ -553,6 +551,54 @@ private struct LocationErrorCard: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Location error")
         .accessibilityHint("Double tap Retry to try again")
+    }
+}
+
+private struct MapCompassOverlay: View {
+    let heading: CLLocationDirection?
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.white)
+            Circle()
+                .stroke(Color(.systemGray3), lineWidth: 2)
+            NeedleView(heading: heading)
+            Text("N")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(red: 0.11, green: 0.11, blue: 0.12))
+                .offset(y: -(HeadingLockButton.size / 2 - 10))
+        }
+        .frame(width: HeadingLockButton.size, height: HeadingLockButton.size)
+        .shadow(color: .black.opacity(0.25), radius: 5, y: 2)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct NeedleView: View {
+    let heading: CLLocationDirection?
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var rotationDegrees: Double {
+        heading ?? 0
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+            let tipRadius = proxy.size.width / 2 - 14
+            Path { path in
+                path.move(to: CGPoint(x: center.x, y: center.y - tipRadius))
+                path.addLine(to: CGPoint(x: center.x + 3.5, y: center.y))
+                path.addLine(to: CGPoint(x: center.x - 3.5, y: center.y))
+                path.closeSubpath()
+            }
+            .fill(Color.red)
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .rotationEffect(.degrees(rotationDegrees), anchor: .center)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: rotationDegrees)
+        }
     }
 }
 
